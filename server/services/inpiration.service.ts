@@ -1,9 +1,11 @@
 import { IInspirationStore } from "../storage/inspirations/inspiration.store";
+import type { ITransactionManager } from "../storage/transaction";
 
 export class InspirationService {
 
     constructor(
     private inspirationStore: IInspirationStore,
+    private txManager: ITransactionManager
   ) {}
 
   /**

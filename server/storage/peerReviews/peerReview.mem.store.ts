@@ -1,6 +1,7 @@
 import { type PeerReview, type InsertPeerReview, type CorrectionObject } from "@shared/schema";
 import { IPeerReviewStore } from "./peerReview.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types"; 
 
 export class PeerReviewMemStore implements IPeerReviewStore {
   private peerReviews: Map<string, PeerReview>;
@@ -23,7 +24,7 @@ export class PeerReviewMemStore implements IPeerReviewStore {
     return this.peerReviews.get(id);
   }
 
-  async createPeerReview(review: InsertPeerReview): Promise<PeerReview> {
+  async createPeerReview(review: InsertPeerReview, _tx?: Tx): Promise<PeerReview> {
     const newReview: PeerReview = {
       id: randomUUID(),
       ...review,
@@ -44,7 +45,7 @@ export class PeerReviewMemStore implements IPeerReviewStore {
     return newReview;
   }
 
-  async updatePeerReview(id: string, updates: Partial<InsertPeerReview>): Promise<PeerReview | undefined> {
+  async updatePeerReview(id: string, updates: Partial<InsertPeerReview>, _tx?: Tx): Promise<PeerReview | undefined> {
     const review = this.peerReviews.get(id);
     if (review) {
       const updatedReview: PeerReview = { 
@@ -59,7 +60,7 @@ export class PeerReviewMemStore implements IPeerReviewStore {
     return undefined;
   }
 
-  async addCorrectionToReview(reviewId: string, correction: CorrectionObject): Promise<PeerReview | undefined> {
+  async addCorrectionToReview(reviewId: string, correction: CorrectionObject, _tx?: Tx): Promise<PeerReview | undefined> {
     const review = this.peerReviews.get(reviewId);
     if (review) {
       const updatedReview: PeerReview = {
@@ -71,5 +72,13 @@ export class PeerReviewMemStore implements IPeerReviewStore {
       return updatedReview;
     }
     return undefined;
+  }
+
+  async deleteByEssayId(essayId: string, _tx?: Tx): Promise<void> {
+  for (const [id, review] of Array.from(this.peerReviews.entries())) {
+    if (review.essayId === essayId) {
+      this.peerReviews.delete(id);
+    }
+  }
   }
 }

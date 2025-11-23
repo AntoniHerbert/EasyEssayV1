@@ -1,6 +1,7 @@
 import { type User, type InsertUser } from "@shared/schema";
 import { IUserStore } from "./user.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types"; 
 
 export class UserMemStore implements IUserStore {
   private users: Map<string, User>;
@@ -17,7 +18,7 @@ export class UserMemStore implements IUserStore {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser, _tx?: Tx): Promise<User> {
     const id = randomUUID();
     const user: User = {
       ...insertUser,

@@ -1,6 +1,7 @@
 import { type UserMessage, type InsertUserMessage } from "@shared/schema";
 import { IMessageStore } from "./message.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types";
 
 export class MessageMemStore implements IMessageStore {
   private userMessages: Map<string, UserMessage>;
@@ -20,7 +21,11 @@ export class MessageMemStore implements IMessageStore {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  async createUserMessage(insertUserMessage: InsertUserMessage): Promise<UserMessage> {
+  async getMessageById(id: string): Promise<UserMessage | undefined> {
+    return this.userMessages.get(id);
+  }
+
+  async createUserMessage(insertUserMessage: InsertUserMessage, _tx?: Tx): Promise<UserMessage> {
     const id = randomUUID();
     const message: UserMessage = {
       ...insertUserMessage,
@@ -34,7 +39,7 @@ export class MessageMemStore implements IMessageStore {
     return message;
   }
 
-  async markMessageAsRead(id: string): Promise<UserMessage | undefined> {
+  async markMessageAsRead(id: string, _tx?: Tx): Promise<UserMessage | undefined> {
     const message = this.userMessages.get(id);
     if (!message) return undefined;
 

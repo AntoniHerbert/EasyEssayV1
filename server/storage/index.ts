@@ -33,6 +33,8 @@ import { InspirationMemStore } from './inspirations/inspiration.mem.store';
 import { FriendshipMemStore } from './friendships/friendship.mem.store';
 import { MessageMemStore } from './messages/message.mem.store';
 
+import { DbTransactionManager, MemTransactionManager, type ITransactionManager } from "./transaction";
+
 export type DrizzleDb = NodePgDatabase<typeof schema>;
 
 let userStore: IUserStore;
@@ -44,6 +46,7 @@ let userCorrectionStore: IUserCorrectionStore;
 let inspirationStore: IInspirationStore; 
 let friendshipStore: IFriendshipStore;
 let messageStore: IMessageStore; 
+let transactionManager: ITransactionManager; 
 
 
 if (process.env.NODE_ENV === 'test') {
@@ -57,6 +60,7 @@ if (process.env.NODE_ENV === 'test') {
   inspirationStore = new InspirationMemStore();
   friendshipStore = new FriendshipMemStore();
   messageStore = new MessageMemStore(); 
+  transactionManager = new MemTransactionManager(); 
 
 } else {
   console.log("🗄️ [Storage] Usando implementações de BANCO DE DADOS");
@@ -73,6 +77,7 @@ if (process.env.NODE_ENV === 'test') {
   inspirationStore = new InspirationDbStore(db); 
   friendshipStore = new FriendshipDbStore(db); 
   messageStore = new MessageDbStore(db); 
+  transactionManager = new DbTransactionManager(db);
 }
 
 export {
@@ -85,4 +90,7 @@ export {
   inspirationStore,
   friendshipStore,
   messageStore,
+  transactionManager,
 };
+
+export type { ITransactionManager }; 

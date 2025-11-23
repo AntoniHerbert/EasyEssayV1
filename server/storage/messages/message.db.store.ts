@@ -3,6 +3,8 @@ import * as schema from "@shared/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 import { type UserMessage, type InsertUserMessage } from "@shared/schema";
 import { IMessageStore } from "./message.store";
+import { type Tx } from "../types"; 
+
 
 export class MessageDbStore implements IMessageStore {
   private db;
@@ -32,13 +34,23 @@ export class MessageDbStore implements IMessageStore {
     return result;
   }
 
-  async createUserMessage(message: InsertUserMessage): Promise<UserMessage> {
-    const result = await this.db.insert(schema.userMessages).values(message).returning();
+  async getMessageById(id: string): Promise<UserMessage | undefined> {
+    const result = await this.db
+      .select()
+      .from(schema.userMessages)
+      .where(eq(schema.userMessages.id, id));
     return result[0];
   }
 
-  async markMessageAsRead(id: string): Promise<UserMessage | undefined> {
-    const result = await this.db
+  async createUserMessage(message: InsertUserMessage, tx?: Tx): Promise<UserMessage> {
+    const executor = (tx || this.db) as DrizzleDb;
+    const result = await executor.insert(schema.userMessages).values(message).returning();
+    return result[0];
+  }
+
+  async markMessageAsRead(id: string, tx?: Tx): Promise<UserMessage | undefined> {
+    const executor = (tx || this.db) as DrizzleDb;
+    const result = await executor
       .update(schema.userMessages)
       .set({ isRead: true })
       .where(eq(schema.userMessages.id, id))

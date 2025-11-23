@@ -1,12 +1,14 @@
 import type { IUserStore } from "../storage/users/user.store";
 import type { IProfileStore } from "../storage/profiles/profile.store";
-import { hashPassword, verifyPassword } from "../auth"; // Utilitários de crypto
+import type { ITransactionManager } from "../storage/transaction";
+import { hashPassword, verifyPassword } from "../auth"; 
 
 export class AuthService {
 
     constructor(
     private userStore: IUserStore,
-    private profileStore: IProfileStore
+    private profileStore: IProfileStore,
+    private txManager: ITransactionManager,
   ) {}
 
   /**
@@ -27,14 +29,16 @@ export class AuthService {
 
     const passwordHash = await hashPassword(password);
 
-    const user = await this.userStore.createUser({ username, passwordHash });
+    const newUser = await this.txManager.transaction(async (tx) => {
+
+    const user = await this.userStore.createUser({ username, passwordHash }, tx);
 
     await this.profileStore.createUserProfile({
       userId: user.id,
       username,
       displayName,
       bio: bio || "",
-    });
+    }, tx);
 
     return user;
   }

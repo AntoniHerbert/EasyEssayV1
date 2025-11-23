@@ -3,6 +3,8 @@ import * as schema from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { type PeerReview, type InsertPeerReview, type CorrectionObject } from "@shared/schema";
 import { IPeerReviewStore } from "./peerReview.store";
+import { type Tx } from "../types"; 
+
 
 export class PeerReviewDbStore implements IPeerReviewStore {
   private db;
@@ -39,13 +41,17 @@ export class PeerReviewDbStore implements IPeerReviewStore {
     return result[0];
   }
 
-  async createPeerReview(review: InsertPeerReview): Promise<PeerReview> {
-    const result = await this.db.insert(schema.peerReviews).values(review as any).returning();
+  async createPeerReview(review: InsertPeerReview, tx?: Tx): Promise<PeerReview> {
+    const executor = (tx || this.db) as DrizzleDb;
+
+    const result = await executor.insert(schema.peerReviews).values(review as any).returning();
     return result[0];
   }
 
-  async updatePeerReview(id: string, updates: Partial<InsertPeerReview>): Promise<PeerReview | undefined> {
-    const result = await this.db
+  async updatePeerReview(id: string, updates: Partial<InsertPeerReview>, tx?: Tx): Promise<PeerReview | undefined> {
+    const executor = (tx || this.db) as DrizzleDb;
+ 
+    const result = await executor
       .update(schema.peerReviews)
       .set({ ...updates, updatedAt: new Date() } as any)
       .where(eq(schema.peerReviews.id, id))
@@ -53,16 +59,25 @@ export class PeerReviewDbStore implements IPeerReviewStore {
     return result[0];
   }
 
-  async addCorrectionToReview(reviewId: string, correction: CorrectionObject): Promise<PeerReview | undefined> {
+  async addCorrectionToReview(reviewId: string, correction: CorrectionObject, tx?: Tx): Promise<PeerReview | undefined> {
+    const executor = (tx || this.db) as DrizzleDb;
+
     const review = await this.getPeerReviewById(reviewId); 
     if (!review) return undefined;
     
     const corrections = [...(review.corrections as CorrectionObject[] || []), correction];
-    const result = await this.db
+    const result = await executor
       .update(schema.peerReviews)
       .set({ corrections: corrections as any, updatedAt: new Date() })
       .where(eq(schema.peerReviews.id, reviewId))
       .returning();
     return result[0];
+  }
+
+  async deleteByEssayId(essayId: string, tx?: Tx): Promise<void> {
+    const executor = (tx || this.db) as DrizzleDb;
+    await executor
+      .delete(schema.peerReviews)
+      .where(eq(schema.peerReviews.essayId, essayId));
   }
 }

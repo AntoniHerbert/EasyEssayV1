@@ -1,10 +1,12 @@
 import { IProfileStore } from "../storage/profiles/profile.store";
+import type { ITransactionManager } from "../storage/transaction";
 import { insertUserProfileSchema } from "@shared/schema";
 
 export class ProfileService {
 
     constructor(
     private profileStore: IProfileStore,
+    private txManager: ITransactionManager
   ) {}
 
   /**
@@ -16,8 +18,6 @@ export class ProfileService {
 
   /**
    * Cria um novo perfil.
-   * ATENÇÃO: Este método contém a lógica legada/insegura que você solicitou manter.
-   * Idealmente, deveria validar se o userId corresponde ao usuário logado ou se o perfil já existe.
    */
   async createProfile(rawBody: unknown) {
 

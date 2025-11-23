@@ -1,6 +1,7 @@
 import { type Friendship, type InsertFriendship } from "@shared/schema";
 import { IFriendshipStore } from "./friendship.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types"; 
 
 export class FriendshipMemStore implements IFriendshipStore {
   private friendships: Map<string, Friendship>;
@@ -20,7 +21,7 @@ export class FriendshipMemStore implements IFriendshipStore {
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
 
-  async createFriendship(insertFriendship: InsertFriendship): Promise<Friendship> {
+  async createFriendship(insertFriendship: InsertFriendship, _tx?: Tx): Promise<Friendship> {
     const id = randomUUID();
     const now = new Date();
     const friendship: Friendship = {
@@ -34,7 +35,7 @@ export class FriendshipMemStore implements IFriendshipStore {
     return friendship;
   }
 
-  async updateFriendship(id: string, updates: Partial<InsertFriendship>): Promise<Friendship | undefined> {
+  async updateFriendship(id: string, updates: Partial<InsertFriendship>, _tx?: Tx): Promise<Friendship | undefined> {
     const friendship = this.friendships.get(id);
     if (!friendship) return undefined;
 

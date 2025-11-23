@@ -4,14 +4,33 @@ import {
 } from "@shared/schema";
 import type { IEssayStore } from "../storage/essays/essay.store";
 import type { IProfileStore } from "../storage/profiles/profile.store";
+import type { ITransactionManager } from "../storage/transaction";
+import type { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
+import type { IEssayLikeStore } from "../storage/essayLikes/essayLike.store"; 
+import type { IUserCorrectionStore } from "../storage/userCorrections/userCorrection.store";
 import type { AiService } from "./ai.service";
+import { z } from "zod";
+
+const createEssayPayload = insertEssaySchema.omit({
+    authorId: true,
+    authorName: true
+})
+
+type CreateEssayInput = z.infer<typeof createEssayPayload>;
+type UpdateEssayInput = Partial<CreateEssayInput>;
 
 export class EssayService {
 
     constructor(
     private essayStore: IEssayStore,
     private profileStore: IProfileStore,
-    private aiService: AiService
+    private aiService: AiService,
+
+    private peerReviewStore: IPeerReviewStore,
+    private essayLikeStore: IEssayLikeStore,
+    private userCorrectionStore: IUserCorrectionStore,
+
+    private txManager: ITransactionManager 
   ) {}
 
 
@@ -24,13 +43,12 @@ export class EssayService {
     return await this.essayStore.getEssay(id);
   }
 
-  async createEssay(userId: string, rawBody: unknown) {
+  async createEssay(userId: string, data: CreateEssayInput) {
     const userProfile = await this.profileStore.getUserProfile(userId);
-    const essayData = insertEssaySchema.omit({ authorId: true, authorName: true }).parse(rawBody);
-    const wordCount = essayData.content.trim().split(/\s+/).filter(word => word.length > 0).length;
+    const wordCount = data.content.trim().split(/\s+/).filter(word => word.length > 0).length;
     
     const essay = await this.essayStore.createEssay({
-      ...essayData,
+      ...data,
       authorId: userId,
       authorName: userProfile?.displayName || "Anonymous",
       wordCount,
@@ -47,16 +65,21 @@ export class EssayService {
     return essay;
   }
 
-  async updateEssay(id: string, rawBody: unknown) {
-    const updates = insertEssaySchema.partial().parse(rawBody);
-    if (updates.content) {
-      updates.wordCount = updates.content.trim().split(/\s+/).filter(word => word.length > 0).length;
-    }
-    return await this.essayStore.updateEssay(id, updates);
-  }
+  async updateEssay(id: string, data: UpdateEssayInput) {
+const essay = await this.essayStore.getEssay(id);
+    if (!essay) return false;
 
-  async deleteEssay(id: string) {
-    return await this.essayStore.deleteEssay(id);
+    await this.txManager.transaction(async (tx) => {
+      await Promise.all([
+        this.peerReviewStore.deleteByEssayId(id, tx),
+        this.essayLikeStore.deleteByEssayId(id, tx),
+        this.userCorrectionStore.deleteByEssayId(id, tx)
+      ]);
+
+      await this.essayStore.deleteEssay(id, tx);
+    });
+
+    return true;
   }
 
 }

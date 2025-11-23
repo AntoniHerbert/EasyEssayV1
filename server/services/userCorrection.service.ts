@@ -1,6 +1,7 @@
 import { 
   IUserCorrectionStore 
 } from "../storage/userCorrections/userCorrections.store";
+import type { ITransactionManager } from "../storage/transaction";
 import { 
   insertUserCorrectionSchema 
 } from "@shared/schema";
@@ -9,6 +10,7 @@ export class UserCorrectionService {
 
     constructor(
     private userCorrectionStore: IUserCorrectionStore,
+    private txManager: ITransactionManager
   ) {}
 
   /**
@@ -23,15 +25,11 @@ export class UserCorrectionService {
    * Recebe o ID da redação e o corpo da requisição (rawBody).
    */
   async createCorrection(essayId: string, rawBody: unknown) {
-    // Regra de Negócio:
-    // 1. Mescla o ID da redação (da URL) com o corpo da requisição.
-    // 2. Valida tudo usando o schema do Zod.
     const correctionData = insertUserCorrectionSchema.parse({
       ...(rawBody as object),
       essayId: essayId,
     });
 
-    // 3. Persiste no banco
     return await this.userCorrectionStore.createUserCorrection(correctionData);
   }
 

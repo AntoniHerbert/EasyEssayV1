@@ -4,6 +4,8 @@ import { eq, and } from "drizzle-orm";
 import { type Inspiration, type InsertInspiration } from "@shared/schema";
 import { IInspirationStore } from "./inspiration.store";
 import { inspirationsData } from "../seedData"; 
+import { type Tx } from "../types"; 
+
 
 export class InspirationDbStore implements IInspirationStore {
   private db;
@@ -46,13 +48,15 @@ export class InspirationDbStore implements IInspirationStore {
     return result[0];
   }
 
-  async createInspiration(inspiration: InsertInspiration): Promise<Inspiration> {
-    const result = await this.db.insert(schema.inspirations).values(inspiration).returning();
+  async createInspiration(inspiration: InsertInspiration, tx?: Tx): Promise<Inspiration> {
+    const executor = (tx || this.db) as DrizzleDb;    
+    const result = await executor.insert(schema.inspirations).values(inspiration).returning();
     return result[0];
   }
 
-  async updateInspiration(id: string, updates: Partial<InsertInspiration>): Promise<Inspiration | undefined> {
-    const result = await this.db
+  async updateInspiration(id: string, updates: Partial<InsertInspiration>, tx?: Tx): Promise<Inspiration | undefined> {
+    const executor = (tx || this.db) as DrizzleDb;    
+    const result = await executor
       .update(schema.inspirations)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(schema.inspirations.id, id))

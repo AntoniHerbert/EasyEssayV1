@@ -1,6 +1,7 @@
 import { type Essay, type InsertEssay } from "@shared/schema";
 import { IEssayStore } from "./essay.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types";
 
 export class EssayMemStore implements IEssayStore {
   private essays: Map<string, Essay>;
@@ -22,7 +23,7 @@ export class EssayMemStore implements IEssayStore {
     }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
 
-  async createEssay(insertEssay: InsertEssay): Promise<Essay> {
+  async createEssay(insertEssay: InsertEssay, _tx?: Tx): Promise<Essay> {
     const id = randomUUID();
     const now = new Date();
     const essay: Essay = {
@@ -38,7 +39,7 @@ export class EssayMemStore implements IEssayStore {
     return essay;
   }
 
-  async updateEssay(id: string, updates: Partial<InsertEssay>): Promise<Essay | undefined> {
+  async updateEssay(id: string, updates: Partial<InsertEssay>, _tx?: Tx): Promise<Essay | undefined> {
     const essay = this.essays.get(id);
     if (!essay) return undefined;
 
@@ -51,7 +52,7 @@ export class EssayMemStore implements IEssayStore {
     return updatedEssay;
   }
 
-  async deleteEssay(id: string): Promise<boolean> {
+  async deleteEssay(id: string, _tx?: Tx): Promise<boolean> {
     return this.essays.delete(id);
   }
 }

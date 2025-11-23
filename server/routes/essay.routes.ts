@@ -4,6 +4,8 @@ import { userCorrectionService } from "../services/userCorrection.service";
 import { essayLikeService } from "../services/essayLike.service"; 
 import { peerReviewService } from "../services/peerReview.service";
 import { aiService } from "../services/ai.service";
+import { validateBody } from "./middlewares/validation"; 
+import { insertEssaySchema } from "@shared/schema"; 
 
 import { 
   insertPeerReviewSchema 
@@ -12,6 +14,9 @@ import { catchAsync } from "./middlewares/errorHandler";
 import { isAuthenticated } from "./middlewares/isAuthenticated";
 
 const router = Router();
+
+const createEssayDTO = insertEssaySchema.omit({ authorId: true, authorName: true });
+const updateEssayDTO = createEssayDTO.partial();
 
 // =================================================================
 // 🚀 Rotas Públicas
@@ -53,13 +58,17 @@ res.json(reviews);
 
 router.use(isAuthenticated);
 
-router.post("/", catchAsync(async (req, res) => {
+router.post("/", 
+  validateBody(createEssayDTO), 
+  catchAsync(async (req, res) => {
 
   const essay = await essayService.createEssay(req.session.userId!, req.body);
   res.status(201).json(essay);
 }));
 
-router.put("/:id", catchAsync(async (req, res) => {
+router.put("/:id",
+  validateBody(updateEssayDTO)
+  catchAsync(async (req, res) => {
 
   const updatedEssay = await essayService.updateEssay(req.params.id, req.body);
   if (!updatedEssay) {

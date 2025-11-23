@@ -2,6 +2,7 @@ import { type Inspiration, type InsertInspiration } from "@shared/schema";
 import { IInspirationStore } from "./inspiration.store";
 import { randomUUID } from "crypto";
 import { inspirationsData } from "../seedData";
+import { type Tx } from "../types"; 
 
 export class InspirationMemStore implements IInspirationStore {
   private inspirations: Map<string, Inspiration>;
@@ -31,7 +32,7 @@ export class InspirationMemStore implements IInspirationStore {
     return this.inspirations.get(id);
   }
 
-  async createInspiration(insertInspiration: InsertInspiration): Promise<Inspiration> {
+  async createInspiration(insertInspiration: InsertInspiration, _tx?: Tx): Promise<Inspiration> {
     const id = randomUUID();
     const now = new Date();
     const inspiration: Inspiration = {
@@ -50,7 +51,7 @@ export class InspirationMemStore implements IInspirationStore {
     return inspiration;
   }
 
-  async updateInspiration(id: string, updates: Partial<InsertInspiration>): Promise<Inspiration | undefined> {
+  async updateInspiration(id: string, updates: Partial<InsertInspiration>, _tx?: Tx): Promise<Inspiration | undefined> {
     const inspiration = this.inspirations.get(id);
     if (!inspiration) return undefined;
 

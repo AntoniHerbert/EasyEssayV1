@@ -8,7 +8,8 @@ import {
   userCorrectionStore,
   inspirationStore,
   friendshipStore,
-  messageStore
+  messageStore,
+  transactionManager
 } from "../storage";
 
 // 2. Importa as Classes dos Serviços
@@ -32,7 +33,7 @@ export const aiService = new AiService(essayStore, peerReviewStore);
 export const authService = new AuthService(userStore, profileStore);
 
 // EssayService precisa de essay, profile E do aiService (que criamos acima)
-export const essayService = new EssayService(essayStore, profileStore, aiService);
+export const essayService = new EssayService(essayStore, profileStore, aiService, transactionManager, peerReviewStore, essayLikeStore, userCorrectionStore);
 
 // ProfileService precisa de profile
 export const profileService = new ProfileService(profileStore);

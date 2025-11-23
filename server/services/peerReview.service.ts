@@ -1,5 +1,6 @@
 import { IEssayStore } from "../storage/essays/essay.store";
 import { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
+import type { ITransactionManager } from "../storage/transaction";
 import { 
   insertPeerReviewSchema , 
   correctionSchema
@@ -9,7 +10,8 @@ export class PeerReviewService {
 
   constructor(
     private essayStore: IEssayStore,
-    private peerReviewStore: IPeerReviewStore
+    private peerReviewStore: IPeerReviewStore,
+    private txManager: ITransactionManager
   ) {}
 
   /**
@@ -25,24 +27,20 @@ export class PeerReviewService {
    * Lança erros para casos de negócio inválidos (404 ou 403).
    */
   async createReview(essayId: string, reviewerId: string, rawBody: unknown) {
-    // 1. Valida se a redação existe
     const essay = await this.essayStore.getEssay(essayId);
     if (!essay) {
       throw new Error("ESSAY_NOT_FOUND");
     }
 
-    // 2. Valida regra de negócio: Autor não revisa própria obra
     if (essay.authorId === reviewerId) {
       throw new Error("CANNOT_REVIEW_OWN_ESSAY");
     }
 
-    // 3. Verifica se já existe uma revisão deste usuário (Idempotência)
     const existingReview = await this.peerReviewStore.getPeerReview(essayId, reviewerId);
     if (existingReview) {
       return { review: existingReview, isNew: false };
     }
 
-    // 4. Valida dados de entrada e Cria
     const reviewData = insertPeerReviewSchema.parse({
       ...(rawBody as object),
       reviewerId,

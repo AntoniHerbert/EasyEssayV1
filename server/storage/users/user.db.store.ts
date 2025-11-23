@@ -1,8 +1,10 @@
-import { type DrizzleDb } from "../index"; // Vamos criar isso no Passo 5
+import { type DrizzleDb } from "../index"; 
 import * as schema from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { type User, type InsertUser } from "@shared/schema";
 import { IUserStore } from "./user.store";
+import { type Tx } from "../types"; 
+
 
 export class UserDbStore implements IUserStore {
   private db;
@@ -21,8 +23,10 @@ export class UserDbStore implements IUserStore {
     return result[0];
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await this.db.insert(schema.users).values(insertUser).returning();
+  async createUser(insertUser: InsertUser, tx?: Tx): Promise<User> {
+    const executor = (tx || this.db) as DrizzleDb;
+
+    const result = await executor.insert(schema.users).values(insertUser).returning();
     return result[0];
   }
 }

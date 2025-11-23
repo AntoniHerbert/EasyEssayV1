@@ -1,9 +1,11 @@
 import { IEssayLikeStore } from "../storage/essayLikes/essayLike.store";
+import type { ITransactionManager } from "../storage/transaction";
 
 export class EssayLikeService {
 
     constructor(
-    private essayLikeStore: IEssayLikeStore
+    private essayLikeStore: IEssayLikeStore,
+    private txManager: ITransactionManager
   ) {}
 
   /**
@@ -15,9 +17,6 @@ export class EssayLikeService {
 
   /**
    * Lógica de "Toggle":
-   * - Se o usuário já curtiu, remove o like.
-   * - Se não curtiu, adiciona o like.
-   * Retorna o novo estado ({ liked: true/false }).
    */
   async toggleLike(essayId: string, userId: string) {
     const isLiked = await this.essayLikeStore.isEssayLiked(essayId, userId);

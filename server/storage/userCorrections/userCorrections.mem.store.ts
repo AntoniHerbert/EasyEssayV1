@@ -1,6 +1,7 @@
 import { type UserCorrection, type InsertUserCorrection } from "@shared/schema";
 import { IUserCorrectionStore } from "./userCorrection.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types"; 
 
 export class UserCorrectionMemStore implements IUserCorrectionStore {
   private userCorrections: Map<string, UserCorrection>;
@@ -15,7 +16,7 @@ export class UserCorrectionMemStore implements IUserCorrectionStore {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  async createUserCorrection(insertUserCorrection: InsertUserCorrection): Promise<UserCorrection> {
+  async createUserCorrection(insertUserCorrection: InsertUserCorrection, _tx?: Tx): Promise<UserCorrection> {
     const id = randomUUID();
     const userCorrection: UserCorrection = {
       ...insertUserCorrection,
@@ -27,7 +28,7 @@ export class UserCorrectionMemStore implements IUserCorrectionStore {
     return userCorrection;
   }
 
-  async updateUserCorrection(id: string, updates: Partial<InsertUserCorrection>): Promise<UserCorrection | undefined> {
+  async updateUserCorrection(id: string, updates: Partial<InsertUserCorrection>, _tx?: Tx): Promise<UserCorrection | undefined> {
     const userCorrection = this.userCorrections.get(id);
     if (!userCorrection) return undefined;
 

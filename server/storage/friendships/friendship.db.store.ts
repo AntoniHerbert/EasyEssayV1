@@ -3,6 +3,8 @@ import * as schema from "@shared/schema";
 import { eq, and, or } from "drizzle-orm";
 import { type Friendship, type InsertFriendship } from "@shared/schema";
 import { IFriendshipStore } from "./friendship.store";
+import { type Tx } from "../types"; 
+
 
 export class FriendshipDbStore implements IFriendshipStore {
   private db;
@@ -30,13 +32,15 @@ export class FriendshipDbStore implements IFriendshipStore {
     return result;
   }
 
-  async createFriendship(friendship: InsertFriendship): Promise<Friendship> {
-    const result = await this.db.insert(schema.friendships).values(friendship).returning();
+  async createFriendship(friendship: InsertFriendship, tx?: Tx): Promise<Friendship> {
+    const executor = (tx || this.db) as DrizzleDb;
+    const result = await executor.insert(schema.friendships).values(friendship).returning();
     return result[0];
   }
 
-  async updateFriendship(id: string, updates: Partial<InsertFriendship>): Promise<Friendship | undefined> {
-    const result = await this.db
+  async updateFriendship(id: string, updates: Partial<InsertFriendship>, tx?: Tx): Promise<Friendship | undefined> {
+    const executor = (tx || this.db) as DrizzleDb;   
+    const result = await executor
       .update(schema.friendships)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(schema.friendships.id, id))

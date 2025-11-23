@@ -1,6 +1,7 @@
 import { type UserProfile, type InsertUserProfile } from "@shared/schema";
 import { IProfileStore } from "./profile.store";
 import { randomUUID } from "crypto";
+import { type Tx } from "../types";
 
 export class ProfileMemStore implements IProfileStore {
   private userProfiles: Map<string, UserProfile>;
@@ -19,7 +20,7 @@ export class ProfileMemStore implements IProfileStore {
       .find(profile => profile.userId === userId);
   }
 
-  async createUserProfile(insertUserProfile: InsertUserProfile): Promise<UserProfile> {
+  async createUserProfile(insertUserProfile: InsertUserProfile, _tx?: Tx): Promise<UserProfile> {
     const id = randomUUID();
     const now = new Date();
     const profile: UserProfile = {
@@ -40,7 +41,7 @@ export class ProfileMemStore implements IProfileStore {
     return profile;
   }
 
-  async updateUserProfile(userId: string, updates: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+  async updateUserProfile(userId: string, updates: Partial<InsertUserProfile>, _tx?: Tx): Promise<UserProfile | undefined> {
     const profile = Array.from(this.userProfiles.values())
       .find(p => p.userId === userId);
     if (!profile) return undefined;
