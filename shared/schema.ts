@@ -210,3 +210,52 @@ export type PeerReview = typeof peerReviews.$inferSelect;
 export type InsertPeerReview = z.infer<typeof insertPeerReviewSchema>;
 
 export type ReviewCategory = 'grammar' | 'style' | 'clarity' | 'structure' | 'content' | 'research';
+
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const registerSchema = insertUserSchema.omit({ id: true, createdAt: true }).extend({
+  displayName: z.string().min(1, "Display name is required"),
+  bio: z.string().optional(),
+});
+
+export const createFriendshipSchema = insertFriendshipSchema.omit({ 
+  id: true, requesterId: true, status: true, createdAt: true, updatedAt: true 
+});
+export const updateFriendshipSchema = insertFriendshipSchema.partial();
+
+export const createMessageSchema = insertUserMessageSchema.omit({ 
+  id: true, fromUserId: true, isRead: true, createdAt: true 
+});
+
+export const createEssayDTO = insertEssaySchema.omit({ authorId: true, authorName: true });
+export const updateEssayDTO = createEssayDTO.partial();
+
+export const createEssayPayload = insertEssaySchema.omit({
+    authorId: true,
+    authorName: true
+})
+
+export const createProfileSchema = insertUserProfileSchema.omit({ userId: true, id: true, joinedAt: true, lastActiveAt: true });
+export const updateProfileSchema = insertUserProfileSchema.partial();
+
+export const updatePeerReviewSchema = insertPeerReviewSchema.partial();
+
+export const addCorrectionSchema = correctionSchema; 
+
+export type CreateProfileInput = z.infer<typeof createProfileSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type UpdatePeerReviewInput = z.infer<typeof updatePeerReviewSchema>;
+export type AddCorrectionInput = z.infer<typeof addCorrectionSchema>;
+
+export type CreateEssayInput = z.infer<typeof createEssayPayload>;
+export type UpdateEssayInput = Partial<CreateEssayInput>;
+
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type CreateFriendshipInput = z.infer<typeof createFriendshipSchema>;
+export type UpdateFriendshipInput = z.infer<typeof updateFriendshipSchema>;
+export type CreateMessageInput = z.infer<typeof createMessageSchema>;

@@ -1,6 +1,6 @@
 import { IProfileStore } from "../storage/profiles/profile.store";
 import type { ITransactionManager } from "../storage/transaction";
-import { insertUserProfileSchema } from "@shared/schema";
+import { insertUserProfileSchema, UpdateProfileInput } from "@shared/schema";
 
 export class ProfileService {
 
@@ -19,12 +19,7 @@ export class ProfileService {
   /**
    * Cria um novo perfil.
    */
-  async createProfile(rawBody: unknown) {
-
-    const profileData = insertUserProfileSchema
-      .omit({ userId: true }) 
-      .parse(rawBody);
-
+  async createProfile(authUserId: string, data: CreateProfileInput) {
 
     const existingProfile = await this.profileStore.getUserProfile(authUserId);
     
@@ -33,7 +28,7 @@ export class ProfileService {
     }
 
     return await this.profileStore.createUserProfile({
-      ...profileData,
+      ...data,
       userId: authUserId, 
     });
   }
@@ -41,14 +36,12 @@ export class ProfileService {
   /**
    * Atualiza um perfil existente.
    */
-  async updateProfile(targetUserId: string, requestingUserId: string, rawBody: unknown) {
+  async updateProfile(targetUserId: string, requestingUserId: string, data: UpdateProfileInput) {
     if (targetUserId !== requestingUserId) {
       throw new Error("FORBIDDEN_ACCESS");
     }
 
-    const updates = insertUserProfileSchema.partial().parse(rawBody);
-
-    const updatedProfile = await this.profileStore.updateUserProfile(targetUserId, updates);
+    const updatedProfile = await this.profileStore.updateUserProfile(targetUserId, data);
     
     if (!updatedProfile) {
       throw new Error("PROFILE_NOT_FOUND");

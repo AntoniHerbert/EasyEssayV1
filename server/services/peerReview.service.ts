@@ -3,7 +3,9 @@ import { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
 import type { ITransactionManager } from "../storage/transaction";
 import { 
   insertPeerReviewSchema , 
-  correctionSchema
+  correctionSchema,
+  UpdatePeerReviewInput,
+  AddCorrectionInput
 } from "@shared/schema";
 
 export class PeerReviewService {
@@ -54,7 +56,7 @@ export class PeerReviewService {
   /**
    * Atualiza uma revisão.
    */
-  async updateReview(reviewId: string, userId: string, rawBody: unknown) {
+  async updateReview(reviewId: string, userId: string, data: UpdatePeerReviewInput) {
     const existingReview = await this.peerReviewStore.getPeerReviewById(reviewId);
     
     if (!existingReview) {
@@ -65,15 +67,13 @@ export class PeerReviewService {
       throw new Error("FORBIDDEN_ACCESS");
     }
 
-    const updates = insertPeerReviewSchema.partial().parse(rawBody);
-
-    return await this.peerReviewStore.updatePeerReview(reviewId, updates);
+    return await this.peerReviewStore.updatePeerReview(reviewId, data);
   }
 
   /**
    * Adiciona uma correção a uma revisão.
    */
-  async addCorrection(reviewId: string, userId: string, rawBody: unknown) {
+  async addCorrection(reviewId: string, userId: string, data: AddCorrectionInput) {
     const existingReview = await this.peerReviewStore.getPeerReviewById(reviewId);
 
     if (!existingReview) {
@@ -87,9 +87,7 @@ export class PeerReviewService {
     if (existingReview.isSubmitted) {
       throw new Error("REVIEW_ALREADY_SUBMITTED");
     }
-
-    const correctionData = correctionSchema.parse(rawBody);
     
-    return await this.peerReviewStore.addCorrectionToReview(reviewId, correctionData);
+    return await this.peerReviewStore.addCorrectionToReview(reviewId, data);
   }
 }

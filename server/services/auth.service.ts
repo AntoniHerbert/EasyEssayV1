@@ -2,6 +2,7 @@ import type { IUserStore } from "../storage/users/user.store";
 import type { IProfileStore } from "../storage/profiles/profile.store";
 import type { ITransactionManager } from "../storage/transaction";
 import { hashPassword, verifyPassword } from "../auth"; 
+import { LoginInput, RegisterInput } from "@shared/schema";
 
 export class AuthService {
 
@@ -15,48 +16,39 @@ export class AuthService {
    * Registra um novo usuário.
    * Responsabilidade: Criar User + Criar Profile + Hash de Senha.
    */
-  async registerUser(rawBody: any) {
-    const { username, password, displayName, bio } = rawBody;
+  async registerUser(data: RegisterInput) {
 
-    if (!username || !password || !displayName) {
-      throw new Error("MISSING_FIELDS");
-    }
-
-    const existingUser = await this.userStore.getUserByUsername(username);
+    const existingUser = await this.userStore.getUserByUsername(data.username);
     if (existingUser) {
       throw new Error("USERNAME_TAKEN");
     }
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(data.password);
 
     const newUser = await this.txManager.transaction(async (tx) => {
 
-    const user = await this.userStore.createUser({ username, passwordHash }, tx);
+    const user = await this.userStore.createUser({ username: data.username, passwordHash }, tx);
 
     await this.profileStore.createUserProfile({
       userId: user.id,
-      username,
-      displayName,
-      bio: bio || "",
+      username: data.username,
+      displayName: data.displayName,
+      bio: data.bio || "",
     }, tx);
+    });
+    return newUser;
 
-    return user;
   }
 
   /**
    * Autentica um usuário.
    * Responsabilidade: Verificar existência e validar senha.
    */
-  async loginUser(rawBody: any) {
-    const { username, password } = rawBody;
+  async loginUser(data: LoginInput) {
 
-    if (!username || !password) {
-      throw new Error("MISSING_FIELDS");
-    }
-
-    const user = await this.userStore.getUserByUsername(username);
+    const user = await this.userStore.getUserByUsername(data.username);
     
-    if (!user || !(await verifyPassword(user.passwordHash, password))) {
+    if (!user || !(await verifyPassword(user.passwordHash, data.password))) {
       throw new Error("INVALID_CREDENTIALS");
     }
 

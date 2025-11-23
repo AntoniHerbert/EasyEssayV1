@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { profileService } from "../services/profile.service";
+import { ProfileService } from "../services/profile.service";
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
+import { validateBody } from "./middlewares/validation";
+import { createProfileSchema, updateProfileSchema } from "@shared/schema";
 
 const router = Router();
 
@@ -14,7 +16,7 @@ const router = Router();
  * Qualquer pessoa (logada ou não) pode ver o perfil de outro usuário.
  */
 router.get("/:userId", catchAsync(async (req, res) => {
-const profile = await profileService.getProfileByUserId(req.params.userId); 
+const profile = await ProfileService.getProfileByUserId(req.params.userId); 
   if (!profile) {
     return res.status(404).json({ message: "Profile not found" });
   }
@@ -25,9 +27,9 @@ const profile = await profileService.getProfileByUserId(req.params.userId);
  * Cria um novo perfil de usuário.
  * (Mantendo a lógica original conforme solicitado)
  */
-router.post("/", catchAsync(async (req, res) => {
+router.post("/", validateBody(createProfileSchema), catchAsync(async (req, res) => {
   try {
-      const profile = await profileService.createProfile(
+      const profile = await ProfileService.createProfile(
         req.session.userId!, 
         req.body
       );
@@ -50,9 +52,9 @@ router.use(isAuthenticated);
 /**
  * Atualiza o perfil do próprio usuário.
  */
-router.put("/:userId", catchAsync(async (req, res) => {
+router.put("/:userId", validateBody(updateProfileSchema), catchAsync(async (req, res) => {
   try {
-      const profile = await profileService.updateProfile(
+      const profile = await ProfileService.updateProfile(
         req.params.userId,
         req.session.userId!,
         req.body

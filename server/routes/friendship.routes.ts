@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { friendshipService } from "../services/friendship.service";
-import { insertFriendshipSchema } from "@shared/schema"; 
+import { FriendshipService } from "../services/friendship.service";
+import { createFriendshipSchema, insertFriendshipSchema, updateFriendshipSchema } from "@shared/schema"; 
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
+import { validateBody } from "./middlewares/validation";
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.use(isAuthenticated);
 router.get("/:userId", catchAsync(async (req, res) => {
   
   const { status } = req.query;
-  const friendships = await friendshipService.getFriendships(
+  const friendships = await FriendshipService.getFriendships(
     req.params.userId,
     status as string
   );
@@ -30,9 +31,9 @@ router.get("/:userId", catchAsync(async (req, res) => {
  * Cria um novo pedido de amizade.
  * O 'requesterId' é pego automaticamente da sessão do usuário logado.
  */
-router.post("/", catchAsync(async (req, res) => {
+router.post("/", validateBody(createFriendshipSchema), catchAsync(async (req, res) => {
   try {
-      const friendship = await friendshipService.createFriendRequest(
+      const friendship = await FriendshipService.createFriendRequest(
         req.session.userId!, 
         req.body
       );
@@ -52,9 +53,9 @@ router.post("/", catchAsync(async (req, res) => {
 /**
  * Atualiza uma amizade (ex: aceitar, recusar ou bloquear um pedido).
  */
-router.put("/:id", catchAsync(async (req, res) => {
+router.put("/:id", validateBody(updateFriendshipSchema), catchAsync(async (req, res) => {
   try {
-      const friendship = await friendshipService.updateFriendshipStatus(
+      const friendship = await FriendshipService.updateFriendshipStatus(
         req.params.id,
         req.session.userId!,
         req.body

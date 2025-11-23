@@ -43,7 +43,7 @@ export class EssayLikeMemStore implements IEssayLikeStore {
   }
 
   async deleteByEssayId(essayId: string, _tx?: Tx): Promise<void> {
-    for (const [id, like] of this.essayLikes.entries()) {
+  for (const [id, like] of Array.from(this.essayLikes.entries())) {
       if (like.essayId === essayId) {
         this.essayLikes.delete(id);
       }

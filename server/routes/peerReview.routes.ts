@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { peerReviewStore } from "../storage/"; 
-import { insertPeerReviewSchema, correctionSchema } from "@shared/schema"; 
-import { peerReviewService } from "server/services/peerReview.service";
+import { insertPeerReviewSchema, correctionSchema, updatePeerReviewSchema, addCorrectionSchema } from "@shared/schema"; 
+import { PeerReviewService } from "server/services/peerReview.service";
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
+import { validateBody } from "./middlewares/validation";
 
 const router = Router();
 
@@ -17,9 +18,9 @@ router.use(isAuthenticated);
  * Atualiza uma revisão (peer review) existente.
  * (ex: adicionar notas, submeter a revisão).
  */
-router.patch("/:id", catchAsync(async (req, res) => {
+router.patch("/:id", validateBody(updatePeerReviewSchema), catchAsync(async (req, res) => {
   try {
-      const review = await peerReviewService.updateReview(
+      const review = await PeerReviewService.updateReview(
         req.params.id,
         req.session.userId!,
         req.body
@@ -40,9 +41,9 @@ router.patch("/:id", catchAsync(async (req, res) => {
  * Adiciona uma correção inline específica a uma revisão (peer review)
  * que ainda não foi submetida.
  */
-router.post("/:id/corrections", catchAsync(async (req, res) => {
+router.post("/:id/corrections", validateBody(addCorrectionSchema), catchAsync(async (req, res) => {
   try {
-      const review = await peerReviewService.addCorrection(
+      const review = await PeerReviewService.addCorrection(
         req.params.id,
         req.session.userId!,
         req.body

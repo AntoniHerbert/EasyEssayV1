@@ -39,4 +39,12 @@ export class UserCorrectionMemStore implements IUserCorrectionStore {
     this.userCorrections.set(id, updatedUserCorrection);
     return updatedUserCorrection;
   }
+
+  async deleteByEssayId(essayId: string, _tx?: Tx): Promise<void> {
+  for (const [id, correction] of Array.from(this.userCorrections.entries())) {
+    if (correction.essayId === essayId) {
+        this.userCorrections.delete(id);
+      }
+    }
+  }
 }

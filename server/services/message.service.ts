@@ -1,6 +1,6 @@
 import { IMessageStore } from "../storage/messages/message.store";
 import type { ITransactionManager } from "../storage/transaction";
-import { insertUserMessageSchema } from "@shared/schema";
+import { CreateMessageInput, insertUserMessageSchema } from "@shared/schema";
 import { encrypt, decrypt } from "../utils/encryption";
 
 export class MessageService {
@@ -31,19 +31,17 @@ export class MessageService {
    * Envia uma mensagem.
    * Regra: Não pode enviar para si mesmo.
    */
-  async sendMessage(fromUserId: string, rawBody: unknown) {
-    const messageData = insertUserMessageSchema
-      .omit({ fromUserId: true })
-      .parse(rawBody);
+  async sendMessage(fromUserId: string, data: CreateMessageInput) {
 
-    if (messageData.toUserId === fromUserId) {
+
+    if (data.toUserId === fromUserId) {
       throw new Error("CANNOT_SEND_TO_SELF");
     }
 
-    const encryptedContent = encrypt(messageData.content);
+    const encryptedContent = encrypt(data.content);
 
     return await this.messageStore.createUserMessage({
-      ...messageData,
+      ...data,
       content: encryptedContent,
       fromUserId,
     });

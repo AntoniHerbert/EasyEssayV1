@@ -1,4 +1,5 @@
 import { 
+    CreateEssayInput,
   insertEssaySchema, 
   type InsertEssay 
 } from "@shared/schema";
@@ -7,17 +8,10 @@ import type { IProfileStore } from "../storage/profiles/profile.store";
 import type { ITransactionManager } from "../storage/transaction";
 import type { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
 import type { IEssayLikeStore } from "../storage/essayLikes/essayLike.store"; 
-import type { IUserCorrectionStore } from "../storage/userCorrections/userCorrection.store";
+import type { IUserCorrectionStore } from "../storage/userCorrections/userCorrections.store";
 import type { AiService } from "./ai.service";
 import { z } from "zod";
 
-const createEssayPayload = insertEssaySchema.omit({
-    authorId: true,
-    authorName: true
-})
-
-type CreateEssayInput = z.infer<typeof createEssayPayload>;
-type UpdateEssayInput = Partial<CreateEssayInput>;
 
 export class EssayService {
 
@@ -65,7 +59,7 @@ export class EssayService {
     return essay;
   }
 
-  async updateEssay(id: string, data: UpdateEssayInput) {
+  async updateEssay(id: string, data: CreateEssayInput) {
 const essay = await this.essayStore.getEssay(id);
     if (!essay) return false;
 

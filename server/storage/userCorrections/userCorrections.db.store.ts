@@ -38,4 +38,11 @@ export class UserCorrectionDbStore implements IUserCorrectionStore {
       .returning();
     return result[0];
   }
+
+  async deleteByEssayId(essayId: string, tx?: Tx): Promise<void> {
+    const executor = (tx || this.db) as DrizzleDb;
+    await executor
+      .delete(schema.userCorrections)
+      .where(eq(schema.userCorrections.essayId, essayId));
+  }
 }

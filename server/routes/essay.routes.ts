@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { essayService } from "../services/essay.service"; 
-import { userCorrectionService } from "../services/userCorrection.service";
-import { essayLikeService } from "../services/essayLike.service"; 
-import { peerReviewService } from "../services/peerReview.service";
-import { aiService } from "../services/ai.service";
+import { EssayService } from "../services/essay.service"; 
+import { UserCorrectionService } from "../services/userCorrection.service";
+import { EssayLikeService } from "../services/essayLike.service"; 
+import { PeerReviewService } from "../services/peerReview.service";
+import { AiService } from "../services/ai.service";
 import { validateBody } from "./middlewares/validation"; 
-import { insertEssaySchema } from "@shared/schema"; 
+import { createEssayDTO, insertEssaySchema, updateEssayDTO } from "@shared/schema"; 
 
 import { 
   insertPeerReviewSchema 
@@ -15,21 +15,18 @@ import { isAuthenticated } from "./middlewares/isAuthenticated";
 
 const router = Router();
 
-const createEssayDTO = insertEssaySchema.omit({ authorId: true, authorName: true });
-const updateEssayDTO = createEssayDTO.partial();
-
 // =================================================================
 // 🚀 Rotas Públicas
 // =================================================================
 
 router.get("/", catchAsync(async (req, res) => {
   const { isPublic, authorId } = req.query;
-  const essays = await essayService.getEssays(isPublic as string, authorId as string);
+  const essays = await EssayService.getEssays(isPublic as string, authorId as string);
   res.json(essays);
 }));
 
 router.get("/:id", catchAsync(async (req, res) => {
-  const essay = await essayService.getEssayById(req.params.id);
+  const essay = await EssayService.getEssayById(req.params.id);
   if (!essay) {
     return res.status(404).json({ message: "Essay not found" });
   }
@@ -37,17 +34,17 @@ router.get("/:id", catchAsync(async (req, res) => {
 }));
 
 router.get("/:id/user-corrections", catchAsync(async (req, res) => {
-const userCorrections = await userCorrectionService.getCorrectionsByEssayId(req.params.id);
+const userCorrections = await UserCorrectionService.getCorrectionsByEssayId(req.params.id);
 res.json(userCorrections);
 }));
 
 router.get("/:id/likes", catchAsync(async (req, res) => {
-const likes = await essayLikeService.getLikes(req.params.id);
+const likes = await EssayLikeService.getLikes(req.params.id);
   res.json({ count: likes.length });
 }));
 
 router.get("/:essayId/peer-reviews", catchAsync(async (req, res) => {
-const reviews = await peerReviewService.getReviewsByEssayId(req.params.essayId);
+const reviews = await PeerReviewService.getReviewsByEssayId(req.params.essayId);
 res.json(reviews);
 }));
 
@@ -62,15 +59,15 @@ router.post("/",
   validateBody(createEssayDTO), 
   catchAsync(async (req, res) => {
 
-  const essay = await essayService.createEssay(req.session.userId!, req.body);
+  const essay = await EssayService.createEssay(req.session.userId!, req.body);
   res.status(201).json(essay);
 }));
 
 router.put("/:id",
-  validateBody(updateEssayDTO)
+  validateBody(updateEssayDTO),
   catchAsync(async (req, res) => {
 
-  const updatedEssay = await essayService.updateEssay(req.params.id, req.body);
+  const updatedEssay = await EssayService.updateEssay(req.params.id, req.body);
   if (!updatedEssay) {
     return res.status(404).json({ message: "Essay not found" });
   }
@@ -79,7 +76,7 @@ router.put("/:id",
 
 router.delete("/:id", catchAsync(async (req, res) => {
 
-  const deleted = await essayService.deleteEssay(req.params.id);
+  const deleted = await EssayService.deleteEssay(req.params.id);
   if (!deleted) {
     return res.status(404).json({ message: "Essay not found" });
   }
@@ -91,7 +88,7 @@ router.delete("/:id", catchAsync(async (req, res) => {
  */
 router.post("/batch-analyze", catchAsync(async (req, res) => {
 
-  const result = await aiService.batchAnalyzeEssays();
+  const result = await AiService.batchAnalyzeEssays();
   res.json({ message: "Batch analysis complete", ...result });
 }));
 
@@ -100,7 +97,7 @@ router.post("/batch-analyze", catchAsync(async (req, res) => {
  */
 router.post("/:id/analyze", catchAsync(async (req, res) => {
 
-  const result = await aiService.analyzeEssay(req.params.id);
+  const result = await AiService.analyzeEssay(req.params.id);
   if (!result) {
     return res.status(404).json({ message: "Essay not found" });
   }
@@ -109,21 +106,21 @@ router.post("/:id/analyze", catchAsync(async (req, res) => {
 
 router.post("/:id/user-corrections", catchAsync(async (req, res) => {
 
-  const userCorrection = await userCorrectionService.createCorrection(req.params.id, req.body);
+  const userCorrection = await UserCorrectionService.createCorrection(req.params.id, req.body);
   res.status(201).json(userCorrection);
 }));
 
 router.post("/:id/like", catchAsync(async (req, res) => {
   const userId = req.session.userId!;
   const essayId = req.params.id;
-  const result = await essayLikeService.toggleLike(essayId, userId); 
+  const result = await EssayLikeService.toggleLike(essayId, userId); 
   
   res.json(result);
 }));
 
 router.post("/:essayId/peer-reviews", catchAsync(async (req, res) => {
   try {
-      const { review, isNew } = await peerReviewService.createReview(
+      const { review, isNew } = await PeerReviewService.createReview(
         req.params.essayId, 
         req.session.userId!, 
         req.body

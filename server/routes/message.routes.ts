@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { messageStore } from "../storage/"; 
-import { insertUserMessageSchema } from "@shared/schema";
-import { messageService } from "server/services/message.service";
+import { createMessageSchema, insertUserMessageSchema } from "@shared/schema";
+import { MessageService } from "server/services/message.service";
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
+import { validateBody } from "./middlewares/validation";
 
 
 const router = Router();
@@ -22,7 +23,7 @@ router.get("/:userId", catchAsync(async (req, res) => {
   const { unreadOnly } = req.query;
     
   try {
-    const messages = await messageService.getUserMessages(
+    const messages = await MessageService.getUserMessages(
       req.params.userId,
       req.session.userId!,
       unreadOnly === "true"
@@ -39,9 +40,9 @@ router.get("/:userId", catchAsync(async (req, res) => {
 /**
  * Envia uma nova mensagem.
  */
-router.post("/", catchAsync(async (req, res) => {
+router.post("/",validateBody(createMessageSchema), catchAsync(async (req, res) => {
   try {
-      const message = await messageService.sendMessage(
+      const message = await MessageService.sendMessage(
         req.session.userId!, 
         req.body
       );
@@ -59,7 +60,7 @@ router.post("/", catchAsync(async (req, res) => {
  */
 router.patch("/:id/read", catchAsync(async (req, res) => {
   try {
-      const message = await messageService.markAsRead(
+      const message = await MessageService.markAsRead(
         req.params.id, 
         req.session.userId!
       );

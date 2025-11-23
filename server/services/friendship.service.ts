@@ -1,6 +1,6 @@
 import { IFriendshipStore } from "../storage/friendships/friendship.store";
 import type { ITransactionManager } from "../storage/transaction";
-import { insertFriendshipSchema } from "@shared/schema";
+import { CreateFriendshipInput, insertFriendshipSchema, UpdateFriendshipInput } from "@shared/schema";
 
 export class FriendshipService {
 
@@ -19,18 +19,15 @@ export class FriendshipService {
   /**
    * Cria um novo pedido de amizade.
    */
-  async createFriendRequest(requesterId: string, rawBody: unknown) {
-    const friendshipData = insertFriendshipSchema
-      .omit({ requesterId: true })
-      .parse(rawBody);
+  async createFriendRequest(requesterId: string, data: CreateFriendshipInput) {
 
-    if (friendshipData.addresseeId === requesterId) {
+    if (data.addresseeId === requesterId) {
       throw new Error("CANNOT_ADD_SELF");
     }
 
     const existingFriendships = await this.friendshipStore.getFriendships(requesterId);
     const alreadyExists = existingFriendships.find(
-      f => f.addresseeId === friendshipData.addresseeId || f.requesterId === friendshipData.addresseeId
+      f => f.addresseeId === data.addresseeId || f.requesterId === friendshipData.addresseeId
     );
 
     if (alreadyExists) {
@@ -38,7 +35,7 @@ export class FriendshipService {
     }
 
     return await this.friendshipStore.createFriendship({
-      ...friendshipData,
+      ...data,
       requesterId,
     });
   }
@@ -46,8 +43,7 @@ export class FriendshipService {
   /**
    * Atualiza o status de uma amizade (Aceitar/Recusar).
    */
-  async updateFriendshipStatus(friendshipId: string, userId: string, rawBody: unknown) {
-    const updates = insertFriendshipSchema.partial().parse(rawBody);
+  async updateFriendshipStatus(friendshipId: string, userId: string, data: UpdateFriendshipInput) {
 
     const userFriendships = await this.friendshipStore.getFriendships(userId);
     const friendship = userFriendships.find(f => f.id === friendshipId);
@@ -60,6 +56,6 @@ export class FriendshipService {
       throw new Error("FORBIDDEN_UPDATE");
     }
 
-    return await this.friendshipStore.updateFriendship(friendshipId, updates);
+    return await this.friendshipStore.updateFriendship(friendshipId, data);
   }
 }
