@@ -16,6 +16,10 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - VITE_HOST=0.0.0.0
       - VITE_PORT=5173
+      - OPENAI_API_KEY=gsdfgsnnjoongosdfsfo
+      - OPENAI_BASE_URL=https://api.groq.com/openai/v1
+      - AI_MODEL=llama-3.3-70b-versatile
+      - USE_REAL_AI=true
     volumes:
       - .:/app
       - /app/node_modules

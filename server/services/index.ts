@@ -27,31 +27,31 @@ import { MessageService } from "./message.service";
 // 3. Instancia os Serviços injetando as dependências na ordem correta
 
 // AiService precisa de essay e peerReview
-export const aiService = new AiService(essayStore, peerReviewStore);
+export const aiService = new AiService(essayStore, peerReviewStore, transactionManager);
 
 // AuthService precisa de user e profile
-export const authService = new AuthService(userStore, profileStore);
+export const authService = new AuthService(userStore, profileStore, transactionManager);
 
 // EssayService precisa de essay, profile E do aiService (que criamos acima)
-export const essayService = new EssayService(essayStore, profileStore, aiService, transactionManager, peerReviewStore, essayLikeStore, userCorrectionStore);
+export const essayService = new EssayService(essayStore, profileStore, aiService, peerReviewStore, essayLikeStore, userCorrectionStore, transactionManager);
 
 // ProfileService precisa de profile
-export const profileService = new ProfileService(profileStore);
+export const profileService = new ProfileService(profileStore, transactionManager);
 
 // PeerReviewService precisa de peerReview e essay
-export const peerReviewService = new PeerReviewService(peerReviewStore, essayStore);
+export const peerReviewService = new PeerReviewService(peerReviewStore, essayStore, transactionManager);
 
 // UserCorrectionService precisa de userCorrection
-export const userCorrectionService = new UserCorrectionService(userCorrectionStore);
+export const userCorrectionService = new UserCorrectionService(userCorrectionStore, transactionManager);
 
 // EssayLikeService precisa de essayLike
-export const essayLikeService = new EssayLikeService(essayLikeStore);
+export const essayLikeService = new EssayLikeService(essayLikeStore, transactionManager);
 
 // InspirationService precisa de inspiration
-export const inspirationService = new InspirationService(inspirationStore);
+export const inspirationService = new InspirationService(inspirationStore, transactionManager);
 
 // FriendshipService precisa de friendship
-export const friendshipService = new FriendshipService(friendshipStore);
+export const friendshipService = new FriendshipService(friendshipStore, transactionManager);
 
 // MessageService precisa de message
-export const messageService = new MessageService(messageStore);
+export const messageService = new MessageService(messageStore, transactionManager);

@@ -27,7 +27,7 @@ export class FriendshipService {
 
     const existingFriendships = await this.friendshipStore.getFriendships(requesterId);
     const alreadyExists = existingFriendships.find(
-      f => f.addresseeId === data.addresseeId || f.requesterId === friendshipData.addresseeId
+      f => f.addresseeId === data.addresseeId || f.requesterId === data.addresseeId
     );
 
     if (alreadyExists) {

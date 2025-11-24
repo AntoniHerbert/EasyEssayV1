@@ -11,8 +11,8 @@ import {
 export class PeerReviewService {
 
   constructor(
-    private essayStore: IEssayStore,
     private peerReviewStore: IPeerReviewStore,
+    private essayStore: IEssayStore,
     private txManager: ITransactionManager
   ) {}
 

@@ -2,6 +2,7 @@ import type { IEssayStore } from "../storage/essays/essay.store";
 import type { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
 import type { ITransactionManager } from "../storage/transaction";
 import { getMockAIReview } from "./mock-analysis";
+import { analyzeEssayWithOpenAI } from "./openai";
 
 export class AiService {
 
@@ -54,9 +55,20 @@ export class AiService {
    * Lógica central privada de interação com a IA e persistência.
    */
   private async runAiAnalysis(essayId: string, title: string, content: string) {
-    const aiReview = getMockAIReview(title, content);
+    let aiReview;
     
-    console.log(`[AiService] Analyzing essay ${essayId}...`);
+    if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_AI === 'true') {
+          try {
+            console.log(`[AiService] Calling OpenAI for essay ${essayId}...`);
+            aiReview = await analyzeEssayWithOpenAI(title, content);
+          } catch (error) {
+            console.error("[AiService] OpenAI failed, falling back to mock:", error);
+            aiReview = getMockAIReview(title, content);
+          }
+        } else {
+          console.log(`[AiService] Using Mock AI for essay ${essayId}...`);
+          aiReview = getMockAIReview(title, content);
+        }
 
     const existingReview = await this.peerReviewStore.getPeerReview(essayId, "AI");
     

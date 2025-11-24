@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ProfileService } from "../services/profile.service";
+import { profileService } from "../services";
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
 import { validateBody } from "./middlewares/validation";
@@ -16,7 +16,7 @@ const router = Router();
  * Qualquer pessoa (logada ou não) pode ver o perfil de outro usuário.
  */
 router.get("/:userId", catchAsync(async (req, res) => {
-const profile = await ProfileService.getProfileByUserId(req.params.userId); 
+const profile = await profileService.getProfileByUserId(req.params.userId); 
   if (!profile) {
     return res.status(404).json({ message: "Profile not found" });
   }
@@ -29,7 +29,7 @@ const profile = await ProfileService.getProfileByUserId(req.params.userId);
  */
 router.post("/", validateBody(createProfileSchema), catchAsync(async (req, res) => {
   try {
-      const profile = await ProfileService.createProfile(
+      const profile = await profileService.createProfile(
         req.session.userId!, 
         req.body
       );
@@ -54,7 +54,7 @@ router.use(isAuthenticated);
  */
 router.put("/:userId", validateBody(updateProfileSchema), catchAsync(async (req, res) => {
   try {
-      const profile = await ProfileService.updateProfile(
+      const profile = await profileService.updateProfile(
         req.params.userId,
         req.session.userId!,
         req.body

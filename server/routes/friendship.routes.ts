@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { FriendshipService } from "../services/friendship.service";
+import { friendshipService } from "../services";
 import { createFriendshipSchema, insertFriendshipSchema, updateFriendshipSchema } from "@shared/schema"; 
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
@@ -20,7 +20,7 @@ router.use(isAuthenticated);
 router.get("/:userId", catchAsync(async (req, res) => {
   
   const { status } = req.query;
-  const friendships = await FriendshipService.getFriendships(
+  const friendships = await friendshipService.getFriendships(
     req.params.userId,
     status as string
   );
@@ -33,7 +33,7 @@ router.get("/:userId", catchAsync(async (req, res) => {
  */
 router.post("/", validateBody(createFriendshipSchema), catchAsync(async (req, res) => {
   try {
-      const friendship = await FriendshipService.createFriendRequest(
+      const friendship = await friendshipService.createFriendRequest(
         req.session.userId!, 
         req.body
       );
@@ -55,7 +55,7 @@ router.post("/", validateBody(createFriendshipSchema), catchAsync(async (req, re
  */
 router.put("/:id", validateBody(updateFriendshipSchema), catchAsync(async (req, res) => {
   try {
-      const friendship = await FriendshipService.updateFriendshipStatus(
+      const friendship = await friendshipService.updateFriendshipStatus(
         req.params.id,
         req.session.userId!,
         req.body

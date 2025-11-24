@@ -7,6 +7,7 @@ const IV_LENGTH = 16;
  * Criptografa um texto.
  */
 export function encrypt(text: string): string {
+  if (!text) return "";
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
   let encrypted = cipher.update(text);
@@ -18,7 +19,10 @@ export function encrypt(text: string): string {
  * Descriptografa um texto.
  */
 export function decrypt(text: string): string {
-  const textParts = text.split(':');
+
+  if (!text) return "";
+  try{
+      const textParts = text.split(':');
   if (textParts.length < 2) return text; 
 
   const iv = Buffer.from(textParts.shift()!, 'hex');
@@ -27,4 +31,9 @@ export function decrypt(text: string): string {
   let decrypted = decipher.update(encryptedText);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return decrypted.toString();
+  } catch (error){
+    console.error("Decryption failed for text:", text, error);
+    return text;
+  }
+
 }

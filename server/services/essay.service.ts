@@ -1,6 +1,7 @@
 import { 
     CreateEssayInput,
   insertEssaySchema, 
+  UpdateEssayInput, 
   type InsertEssay 
 } from "@shared/schema";
 import type { IEssayStore } from "../storage/essays/essay.store";
@@ -59,11 +60,21 @@ export class EssayService {
     return essay;
   }
 
-  async updateEssay(id: string, data: CreateEssayInput) {
-const essay = await this.essayStore.getEssay(id);
+async updateEssay(id: string, data: UpdateEssayInput) {
+  
+    if (data.content) {
+      data.wordCount = data.content.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+    
+    return await this.essayStore.updateEssay(id, data);
+  }
+
+  async deleteEssay(id: string) {
+    const essay = await this.essayStore.getEssay(id);
     if (!essay) return false;
 
     await this.txManager.transaction(async (tx) => {
+
       await Promise.all([
         this.peerReviewStore.deleteByEssayId(id, tx),
         this.essayLikeStore.deleteByEssayId(id, tx),

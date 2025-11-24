@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { peerReviewStore } from "../storage/"; 
 import { insertPeerReviewSchema, correctionSchema, updatePeerReviewSchema, addCorrectionSchema } from "@shared/schema"; 
-import { PeerReviewService } from "server/services/peerReview.service";
+import { peerReviewService } from "server/services";
 import { catchAsync } from "./middlewares/errorHandler"; 
 import { isAuthenticated } from "./middlewares/isAuthenticated"; 
 import { validateBody } from "./middlewares/validation";
@@ -20,7 +20,7 @@ router.use(isAuthenticated);
  */
 router.patch("/:id", validateBody(updatePeerReviewSchema), catchAsync(async (req, res) => {
   try {
-      const review = await PeerReviewService.updateReview(
+      const review = await peerReviewService.updateReview(
         req.params.id,
         req.session.userId!,
         req.body
@@ -43,7 +43,7 @@ router.patch("/:id", validateBody(updatePeerReviewSchema), catchAsync(async (req
  */
 router.post("/:id/corrections", validateBody(addCorrectionSchema), catchAsync(async (req, res) => {
   try {
-      const review = await PeerReviewService.addCorrection(
+      const review = await peerReviewService.addCorrection(
         req.params.id,
         req.session.userId!,
         req.body
