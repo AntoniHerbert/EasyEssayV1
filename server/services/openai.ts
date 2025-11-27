@@ -55,7 +55,11 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
         {
           role: "system",
           content: `You are an expert academic writing tutor. Analyze the essay and provide structured feedback in JSON format.
-          
+
+          LANGUAGE INSTRUCTIONS:
+          - **All comments and feedback text MUST be in Portuguese (Português do Brasil).**
+          - **JSON Keys and Category values (e.g., 'grammar', 'style') MUST remain in English.**
+
           Scoring Guide:
           - Evaluate 6 categories: grammar, style, clarity, structure, content, research.
           - **Assign a score from 0 to 200 for EACH category.**
@@ -78,7 +82,7 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
             "researchScore": number,
             "overallScore": number,
             "corrections": [
-              { "category": "grammar"|"style"|"clarity"|"structure"|"content"|"research", "exactQuote": "string", "comment": "string" }
+              { "category": "grammar"|"style"|"clarity"|"structure"|"content"|"research", "exactQuote": "string", "comment": "string (IN PORTUGUESE)" }
             ]
           }`
         },
