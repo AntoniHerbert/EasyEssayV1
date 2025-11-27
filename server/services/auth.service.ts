@@ -35,6 +35,7 @@ export class AuthService {
       displayName: data.displayName,
       bio: data.bio || "",
     }, tx);
+    return user;
     });
     return newUser;
 

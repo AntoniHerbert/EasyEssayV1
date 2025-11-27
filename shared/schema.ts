@@ -217,7 +217,8 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const registerSchema = insertUserSchema.omit({ id: true, createdAt: true }).extend({
+export const registerSchema = insertUserSchema.omit({ id: true, createdAt: true, passwordHash: true }).extend({
+  password: z.string(),
   displayName: z.string().min(1, "Display name is required"),
   bio: z.string().optional(),
 });
