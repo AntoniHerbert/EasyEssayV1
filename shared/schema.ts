@@ -207,6 +207,11 @@ export const insertPeerReviewSchema = createInsertSchema(peerReviews).omit({
 });
 
 export type PeerReview = typeof peerReviews.$inferSelect;
+
+export type PeerReviewWithProfile = PeerReview & {
+  reviewerName: string | null;
+};
+
 export type InsertPeerReview = z.infer<typeof insertPeerReviewSchema>;
 
 export type ReviewCategory = 'grammar' | 'style' | 'clarity' | 'structure' | 'content' | 'research';

@@ -99,6 +99,6 @@ export class AiService {
       });
     }
 
-    await this.essayStore.updateEssay(essayId, { isAnalyzed: true });
+    await this.essayStore.updateEssay(essayId, { isAnalyzed: true, isPublic: true });
   }
 }

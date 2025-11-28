@@ -29,13 +29,28 @@ export class EssayService {
   ) {}
 
 
-  async getEssays(isPublicString?: string, authorId?: string) {
-    const isPublic = isPublicString === "true" ? true : isPublicString === "false" ? false : undefined;
-    return await this.essayStore.getEssays(isPublic, authorId);
+  async getEssays(requestingUserId: string | undefined, isPublicString?: string, authorIdFilter?: string) {
+    let isPublic = isPublicString === "true" ? true : isPublicString === "false" ? false : undefined;
+    const isViewingOwnProfile = authorIdFilter && authorIdFilter === requestingUserId;
+    if (!isViewingOwnProfile) {
+      isPublic = true;
+    }
+
+    return await this.essayStore.getEssays(isPublic, authorIdFilter);
   }
 
-  async getEssayById(id: string) {
-    return await this.essayStore.getEssay(id);
+  async getEssayById(essayId: string, requestingUserId: string) {
+    const essay = await this.essayStore.getEssay(essayId);
+    
+    if (!essay) {
+      return null; 
+    }
+
+    if (!essay.isPublic && essay.authorId !== requestingUserId) {
+      throw new Error("FORBIDDEN_ACCESS");
+    }
+
+    return essay;
   }
 
   async createEssay(userId: string, data: CreateEssayInput) {

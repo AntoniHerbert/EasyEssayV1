@@ -13,19 +13,27 @@ export class PeerReviewDbStore implements IPeerReviewStore {
     this.db = db;
   }
 
-  async getPeerReviews(essayId: string): Promise<PeerReview[]> {
+  async getPeerReviews(essayId: string): Promise<schema.PeerReviewWithProfile[]> {
     const result = await this.db
-      .select()
+      .select({
+        ...schema.peerReviews,
+        reviewerName: schema.userProfiles.displayName, 
+      })
       .from(schema.peerReviews)
+      .leftJoin(schema.userProfiles, eq(schema.peerReviews.reviewerId, schema.userProfiles.userId))
       .where(eq(schema.peerReviews.essayId, essayId))
       .orderBy(desc(schema.peerReviews.createdAt));
     return result;
   }
 
-  async getPeerReview(essayId: string, reviewerId: string): Promise<PeerReview | undefined> {
+  async getPeerReview(essayId: string, reviewerId: string): Promise<schema.PeerReviewWithProfile | undefined> {
     const result = await this.db
-      .select()
+      .select({
+        ...schema.peerReviews,
+        reviewerName: schema.userProfiles.displayName,
+      })
       .from(schema.peerReviews)
+      .leftJoin(schema.userProfiles, eq(schema.peerReviews.reviewerId, schema.userProfiles.userId))
       .where(and(
         eq(schema.peerReviews.essayId, essayId),
         eq(schema.peerReviews.reviewerId, reviewerId)
@@ -33,10 +41,14 @@ export class PeerReviewDbStore implements IPeerReviewStore {
     return result[0];
   }
 
-  async getPeerReviewById(id: string): Promise<PeerReview | undefined> {
+  async getPeerReviewById(id: string): Promise<schema.PeerReviewWithProfile | undefined> {
     const result = await this.db
-      .select()
+      .select({
+        ...schema.peerReviews,
+        reviewerName: schema.userProfiles.displayName,
+      })
       .from(schema.peerReviews)
+      .leftJoin(schema.userProfiles, eq(schema.peerReviews.reviewerId, schema.userProfiles.userId))
       .where(eq(schema.peerReviews.id, id));
     return result[0];
   }

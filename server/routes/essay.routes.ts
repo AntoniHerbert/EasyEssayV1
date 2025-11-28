@@ -21,16 +21,32 @@ const router = Router();
 
 router.get("/", catchAsync(async (req, res) => {
   const { isPublic, authorId } = req.query;
-  const essays = await essayService.getEssays(isPublic as string, authorId as string);
+  const essays = await essayService.getEssays(
+    req.session.userId, // <--- NOVO
+    isPublic as string, 
+    authorId as string
+  );
   res.json(essays);
 }));
 
 router.get("/:id", catchAsync(async (req, res) => {
-  const essay = await essayService.getEssayById(req.params.id);
-  if (!essay) {
-    return res.status(404).json({ message: "Essay not found" });
+try {
+    const essay = await essayService.getEssayById(
+      req.params.id, 
+      req.session.userId 
+    );
+    
+    if (!essay) {
+      return res.status(404).json({ message: "Essay not found" });
+    }
+    res.json(essay);
+
+  } catch (error: any) {
+    if (error.message === "FORBIDDEN_ACCESS") {
+      return res.status(403).json({ message: "You do not have permission to view this private essay" });
+    }
+    throw error;
   }
-  res.json(essay);
 }));
 
 router.get("/:id/user-corrections", catchAsync(async (req, res) => {

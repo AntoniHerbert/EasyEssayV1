@@ -351,7 +351,7 @@ export function UserProfile() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <Mail className="w-4 h-4" />
-            Messages ({(messages as UserMessage[]).filter(m => !m.isRead).length})
+            Messages ({(messages as UserMessage[]).filter(m => !m.isRead && m.toUserId === user?.id).length})
           </TabsTrigger>
           <TabsTrigger value="friends" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -398,7 +398,7 @@ export function UserProfile() {
                   </div>
                   
                   {/* Conversation Thread */}
-                  <div className={`${!selectedConversationUserId ? 'hidden md:flex' : 'flex'} flex-col`}>
+                  <div className={`${!selectedConversationUserId ? 'hidden md:flex' : 'flex'} flex-col h-full overflow-hidden`}>
                     {selectedConversationUserId ? (
                       <ConversationThread
                         currentUserId={user?.id || ""}

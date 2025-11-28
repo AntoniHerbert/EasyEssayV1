@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { ArrowLeft, MessageSquare, Star, Users, Eye, Calendar, CheckCircle2 } fr
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
-import { type Essay, type PeerReview, type ReviewCategory, type CorrectionObject } from "@shared/schema";
+import { type Essay, type PeerReviewWithProfile, type ReviewCategory, type CorrectionObject } from "@shared/schema";
 
 const REVIEW_CATEGORIES: { key: ReviewCategory; label: string; description: string; color: string }[] = [
   { key: 'grammar', label: 'Grammar & Mechanics', description: 'Spelling, punctuation, syntax', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
@@ -52,7 +52,7 @@ export default function EssayDetail() {
     enabled: !!essayId,
   });
 
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<PeerReview[]>({
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<PeerReviewWithProfile[]>({
     queryKey: [`/api/essays/${essayId}/peer-reviews`],
     enabled: !!essayId,
   });
@@ -242,6 +242,11 @@ export default function EssayDetail() {
   const reviewedCategoriesCount = REVIEW_CATEGORIES.filter(cat => isCategoryReviewed(cat.key)).length;
   const reviewProgress = (reviewedCategoriesCount / REVIEW_CATEGORIES.length) * 100;
 
+  const getReviewerName = (review: PeerReviewWithProfile) => {
+    if (review.reviewerId === "AI") return "AI";
+    return review.reviewerName || "Anonymous Student";
+  };
+
   const renderHighlightedText = (text: string) => {
     if (!viewingReviewId) {
       return <span>{text}</span>;
@@ -315,6 +320,29 @@ export default function EssayDetail() {
   }
 
   const essayData = essay as Essay;
+  const isAuthor = essayData?.authorId === user?.id;
+  const isEditingReview = !isAuthor && !isReviewSubmitted; // Estou mexendo nos sliders?
+
+  let displayScore = 0;
+  let scoreLabel = "No reviews yet";
+
+  if (viewingReviewId) {
+    // CASO 1: Vendo uma review específica (clicada na lista)
+    const review = reviews.find(r => r.id === viewingReviewId);
+    displayScore = review ? review.overallScore : 0;
+    scoreLabel = "Selected Review Score";
+  
+  } else if (isEditingReview) {
+    // CASO 2: Sou um revisor e estou editando agora (tempo real)
+    displayScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
+    scoreLabel = "Your Current Score";
+
+  } else if (reviews.length > 0) {
+    // CASO 3: Padrão (Média de TODAS as reviews, incluindo IA)
+    const totalScore = reviews.reduce((acc, curr) => acc + curr.overallScore, 0);
+    displayScore = Math.round(totalScore / reviews.length);
+    scoreLabel = `Average Score (${reviews.length} reviews)`;
+  }
   const overallScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
   const maxScore = 1200;
 
@@ -329,12 +357,21 @@ export default function EssayDetail() {
           <h1 className="text-2xl md:text-3xl font-bold">{essayData?.title}</h1>
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
+    
               <Avatar className="w-6 h-6">
                 <AvatarFallback>
                   {essayData?.authorName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span>{essayData?.authorName}</span>
+<Link href={`/profile/${essayData?.authorId}`}>
+                 <Button 
+                   variant="ghost" 
+                   size="sm" 
+                   className="font-medium hover:text-primary p-0 h-auto"
+                 >
+                   {essayData?.authorName}
+                 </Button>
+              </Link>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
@@ -347,8 +384,8 @@ export default function EssayDetail() {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-primary">{overallScore}/{maxScore}</div>
-          <div className="text-sm text-muted-foreground">Overall Score</div>
+          <div className="text-2xl font-bold text-primary">{displayScore}/{maxScore}</div>
+          <div className="text-sm text-muted-foreground">{scoreLabel}</div>
         </div>
       </div>
 
@@ -410,11 +447,23 @@ export default function EssayDetail() {
                         <div key={review.id} className="space-y-3 pb-4 border-b last:border-b-0">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-medium text-sm">Reviewer: {review.reviewerId}</div>
+                              <div className="font-medium text-sm">Reviewer: {review.reviewerId === "AI" || review.reviewerId === user?.id ? (
+                                  getReviewerName(review)
+                                ) : (
+                                  <Link href={`/profile/${review.reviewerId}`}>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="font-medium hover:text-primary p-0 h-auto ml-1"
+                                    >
+                                      {getReviewerName(review)}
+                                    </Button>
+                                  </Link>
+                                )}</div>
                               <div className="text-xs text-muted-foreground">
                                 Overall Score: {review.overallScore}/1200 ({review.corrections.length} comments)
                               </div>
-                            </div>
+                            </div> 
                           </div>
                           
                           <div className="space-y-3">
@@ -633,6 +682,7 @@ export default function EssayDetail() {
                   {reviews.map((review) => {
                     const isActive = viewingReviewId === review.id;
                     const isAI = review.reviewerId === "AI";
+                    const reviewerName = getReviewerName(review);
                     
                     return (
                       <div 
@@ -654,7 +704,7 @@ export default function EssayDetail() {
                               </>
                             ) : (
                               <>
-                                Reviewer {isActive && <span className="text-primary">(Viewing)</span>}
+                                {reviewerName} {isActive && <span className="text-primary">(Viewing)</span>}
                               </>
                             )}
                           </div>
