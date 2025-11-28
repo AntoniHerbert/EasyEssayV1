@@ -62,14 +62,8 @@ export function CommunityFeed() {
     },
   });
 
-  const getAvatarImage = (authorName: string) => {
-    const avatars = [
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    ];
-    const hash = authorName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    return avatars[hash % avatars.length];
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getTopicBadge = (title: string, content: string) => {
@@ -177,15 +171,12 @@ export function CommunityFeed() {
               <Card key={essay.id} className="hover:shadow-md transition-shadow" data-testid={`community-essay-${essay.id}`}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage 
-                        src={getAvatarImage(essay.authorName)} 
-                        alt={essay.authorName}
-                      />
-                      <AvatarFallback>
-                        {essay.authorName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                          <Avatar>
+                            <AvatarImage src= {getInitials(essay.authorName || "User")} alt={essay.authorName} />
+                            <AvatarFallback>
+                          {    getInitials(essay.authorName || "User")}
+                            </AvatarFallback>
+                          </Avatar>
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
