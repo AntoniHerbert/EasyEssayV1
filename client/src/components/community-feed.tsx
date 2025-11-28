@@ -75,7 +75,7 @@ export function CommunityFeed() {
   const getTopicBadge = (title: string, content: string) => {
     const text = (title + " " + content).toLowerCase();
     
-    if (text.includes("technology") || text.includes("ai") || text.includes("computer") || text.includes("digital")) {
+    if (text.includes("technology") || text.includes("AI") || text.includes("computer") || text.includes("digital")) {
       return { label: "Technology", color: "bg-primary/10 text-primary" };
     } else if (text.includes("environment") || text.includes("climate") || text.includes("sustainability")) {
       return { label: "Environment", color: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" };
