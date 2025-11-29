@@ -413,6 +413,7 @@ export default function EssayDetail() {
                 id="essay-content"
                 className="prose dark:prose-invert max-w-none break-words leading-relaxed whitespace-pre-wrap cursor-text"
                 onMouseUp={handleTextSelection}
+                onTouchEnd={handleTextSelection}
                 data-testid="essay-content"
               >
                 {essayData?.content && renderHighlightedText(essayData.content)}

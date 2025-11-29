@@ -276,7 +276,9 @@ export function UserProfile() {
               data-testid={isEditing ? "button-save-profile" : "button-edit-profile"}
             >
               {isEditing ? <Check className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-              {isEditing ? (updateProfileMutation.isPending ? "Saving..." : "Save") : "Edit"}
+              <span className="hidden sm:inline">
+                {isEditing ? (updateProfileMutation.isPending ? "Saving..." : "Save") : "Edit"}
+              </span>
             </Button>
           </div>
 
@@ -350,20 +352,26 @@ export function UserProfile() {
       <Tabs defaultValue="messages" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="messages" className="flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Messages ({(messages as UserMessage[]).filter(m => !m.isRead && m.toUserId === user?.id).length})
-          </TabsTrigger>
+            <Mail className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Messages</span> 
+              <span className="ml-0 sm:ml-2">
+                ({(messages as UserMessage[]).filter(m => !m.isRead && m.toUserId === user?.id).length})
+            </span>          
+            </TabsTrigger>
           <TabsTrigger value="friends" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Friends ({(friendships as Friendship[]).filter(f => f.status === "accepted").length})
-          </TabsTrigger>
+            <Users className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Friends</span> 
+              <span className="ml-0 sm:ml-2">
+                ({(friendships as Friendship[]).filter(f => f.status === "accepted").length})
+            </span>
+            </TabsTrigger>
           <TabsTrigger value="discover" className="flex items-center gap-2">
-            <UserPlus className="w-4 h-4" />
-            Discover
+            <UserPlus className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Discover</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
+          <TabsTrigger value="settings shrink-0" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
-            Settings
+           <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
 
