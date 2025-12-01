@@ -2,10 +2,12 @@ import { IMessageStore } from "../storage/messages/message.store";
 import type { ITransactionManager } from "../storage/transaction";
 import { CreateMessageInput, insertUserMessageSchema } from "@shared/schema";
 import { encrypt, decrypt } from "../utils/encryption";
+import type { INotificationService } from "./notifications/notification.interface";
 
 export class MessageService {
 
     constructor(
+    private notificationService: INotificationService,
     private messageStore: IMessageStore,
     private txManager: ITransactionManager
   ) {}
@@ -40,11 +42,21 @@ export class MessageService {
 
     const encryptedContent = encrypt(data.content);
 
-    return await this.messageStore.createUserMessage({
+    const message = await this.messageStore.createUserMessage({
       ...data,
       content: encryptedContent,
       fromUserId,
     });
+
+    const decryptedMessage = {
+      ...message,
+      content: data.content // Usamos o texto original que já temos em memória
+    };
+
+    // 2. Avisamos o serviço de notificação
+    this.notificationService.notifyNewMessage(message.toUserId, decryptedMessage);
+
+    return message;
   }
 
   /**

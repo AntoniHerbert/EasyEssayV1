@@ -155,7 +155,7 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       </div>
 
       {/* Filter Tabs */}
-      <div className="grid grid-cols-4 gap-1 bg-muted rounded-lg p-1 mb-6 w-full">
+      <div className="grid grid-cols-4 gap-1 bg-muted rounded-lg p-1 mb-6 w-fit">
         {[
           { key: "all", label: "All Essays" },
           { key: "drafts", label: "Drafts" },

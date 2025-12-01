@@ -23,9 +23,10 @@ import { EssayLikeService } from "./essayLike.service";
 import { InspirationService } from "./inspiration.service";
 import { FriendshipService } from "./friendship.service";
 import { MessageService } from "./message.service";
+import { SocketNotificationService } from "./notifications/socket.notification.service";
 
 // 3. Instancia os Serviços injetando as dependências na ordem correta
-
+export const notificationService = new SocketNotificationService();
 // AiService precisa de essay e peerReview
 export const aiService = new AiService(essayStore, peerReviewStore, transactionManager);
 
@@ -54,4 +55,4 @@ export const inspirationService = new InspirationService(inspirationStore, trans
 export const friendshipService = new FriendshipService(friendshipStore, transactionManager);
 
 // MessageService precisa de message
-export const messageService = new MessageService(messageStore, transactionManager);
+export const messageService = new MessageService(notificationService, messageStore, transactionManager);

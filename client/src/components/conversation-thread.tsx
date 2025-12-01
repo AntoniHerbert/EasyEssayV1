@@ -60,10 +60,6 @@ export function ConversationThread({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/messages/${currentUserId}`] });
       setNewMessage("");
-      toast({
-        title: "Message sent",
-        description: "Your message has been delivered.",
-      });
     },
     onError: () => {
       toast({
@@ -185,7 +181,7 @@ const parseLocalDate = (dateInput: string | Date) => {
             return (
 <React.Fragment key={message.id}>
                 {showDateSeparator && (
-                  <div className="flex justify-center my-6 sticky top-0 z-10">
+                  <div className="flex justify-center my-6 z-10 ">
                     <span className="text-[10px] font-medium text-muted-foreground bg-muted/90 backdrop-blur border px-3 py-1 rounded-full shadow-sm">
                       {getDayLabel(message.createdAt)}
                     </span>

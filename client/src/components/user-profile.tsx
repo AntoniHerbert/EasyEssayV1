@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import { ConversationList } from "@/components/conversation-list";
 import { ConversationThread } from "@/components/conversation-thread";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { io, Socket } from "socket.io-client";
 
 export function UserProfile() {
   const { user, logout } = useAuth();
@@ -46,6 +47,8 @@ export function UserProfile() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const socketRef = useRef<Socket | null>(null); 
+
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -71,6 +74,38 @@ export function UserProfile() {
   const { data: allUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/users"],
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const socket = io(window.location.origin, {
+      path: "/api/socket.io",
+      withCredentials: true,
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      socket.emit("join", user.id);
+    });
+
+    socket.on("new_message", (newMessage: UserMessage) => {
+      console.log("Nova mensagem recebida:", newMessage);
+      
+      queryClient.setQueryData([`/api/messages/${user.id}`], (oldMessages: UserMessage[] | undefined) => {
+        if (!oldMessages) return [newMessage];
+        if (oldMessages.some(m => m.id === newMessage.id)) return oldMessages;
+        return [...oldMessages, newMessage];
+      });
+
+    });
+
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?.id, queryClient, selectedConversationUserId]);
 
   useEffect(() => {
     if (profile && typeof profile === 'object' && 'displayName' in profile) {

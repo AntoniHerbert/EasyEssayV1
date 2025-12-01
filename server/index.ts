@@ -12,9 +12,30 @@ import helmet from "helmet";
 import cors from "cors";
 import hpp from "hpp";
 import { apiLimiter } from "./routes/middlewares/rateLimit";
+import { Server as SocketIOServer } from "socket.io";
+import { notificationService } from "./services"; 
 
 const app = express();
 const server = http.createServer(app); 
+
+const io = new SocketIOServer(server, {
+  path: "/api/socket.io",
+  addTrailingSlash: false,
+  cors: {
+    origin: "*", 
+    credentials: true
+  }
+});
+
+io.on("connection", (socket) => {
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined room ${userId}`);
+  });
+});
+
+notificationService.setIo(io);
 
 app.set("trust proxy", 1);
 
@@ -38,7 +59,12 @@ app.use("/api", apiLimiter);
 
 
 const PgSession = connectPgSimple(session);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 40000,
+  connectionTimeoutMillis:2000,
+});
 
 app.use(
   session({
@@ -98,6 +124,17 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     vite = await setupVite(app, server); 
   }
+
+  app.get("/health", async (req, res) => {
+  try {
+    await pool.query('SELECT 1'); 
+    
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("Healthcheck failed:", error);
+    res.status(500).send("Unhealthy");
+  }
+});
 
   registerRoutes(app);
   

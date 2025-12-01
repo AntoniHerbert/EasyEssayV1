@@ -68,17 +68,30 @@ export function ConversationList({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const formatTime = (date: Date) => {
+const formatTime = (date: Date) => {
     const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } else if (diffInHours < 168) { 
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (messageDate.getTime() === today.getTime()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
+    
+    if (messageDate.getTime() === yesterday.getTime()) {
+      return 'Yesterday';
+    }
+    
+    const diffTime = Math.abs(today.getTime() - messageDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    
+    if (diffDays < 7) {
+      return date.toLocaleDateString([], { weekday: 'short' });
+    }
+
+    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   if (conversations.length === 0) {

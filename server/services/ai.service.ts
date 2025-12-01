@@ -75,7 +75,7 @@ private async runAiAnalysis(essayId: string, title: string, content: string) {
     }
 
 
-    await this.essayStore.updateEssay(essayId, { isAnalyzed: true });
+    await this.essayStore.updateEssay(essayId, { isAnalyzed: true, isPublic: false });
     
     await this.saveReviewInDatabase(essayId, aiReview, null);
   }
