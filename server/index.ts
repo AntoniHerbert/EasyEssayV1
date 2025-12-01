@@ -8,12 +8,33 @@ import { setupVite, serveStatic, log } from "./vite";
 import http from "http"; 
 import path from "path"; 
 import fs from "fs"; 
+import helmet from "helmet";
+import cors from "cors";
+import hpp from "hpp";
+import { apiLimiter } from "./routes/middlewares/rateLimit";
 
 const app = express();
 const server = http.createServer(app); 
 
+app.set("trust proxy", 1);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(helmet());
+} else {
+  app.use(helmet({ contentSecurityPolicy: false }));
+}
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || true, 
+  credentials: true, 
+}));
+
+app.use(hpp()); 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use("/api", apiLimiter);
 
 
 const PgSession = connectPgSimple(session);
@@ -32,7 +53,8 @@ app.use(
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: "lax",
     },
   })
 );
@@ -82,9 +104,8 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
+    console.error(err);
     res.status(status).json({ message });
-    throw err;
   });
 
 if (app.get("env") === "development") {

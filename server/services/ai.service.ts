@@ -2,7 +2,7 @@ import type { IEssayStore } from "../storage/essays/essay.store";
 import type { IPeerReviewStore } from "../storage/peerReviews/peerReview.store";
 import type { ITransactionManager } from "../storage/transaction";
 import { getMockAIReview } from "./mock-analysis";
-import { analyzeEssayWithOpenAI } from "./openai";
+import { analyzeEssayWithOpenAI, type AIReviewResult } from "./openai";
 
 export class AiService {
 
@@ -54,51 +54,91 @@ export class AiService {
   /**
    * Lógica central privada de interação com a IA e persistência.
    */
-  private async runAiAnalysis(essayId: string, title: string, content: string) {
-    let aiReview;
-    
-    if (process.env.NODE_ENV === 'production' || process.env.USE_REAL_AI === 'true') {
-          try {
-            console.log(`[AiService] Calling OpenAI for essay ${essayId}...`);
-            aiReview = await analyzeEssayWithOpenAI(title, content);
-          } catch (error) {
-            console.error("[AiService] OpenAI failed, falling back to mock:", error);
-            aiReview = getMockAIReview(title, content);
-          }
-        } else {
-          console.log(`[AiService] Using Mock AI for essay ${essayId}...`);
-          aiReview = getMockAIReview(title, content);
-        }
+private async runAiAnalysis(essayId: string, title: string, content: string) {
 
-    const existingReview = await this.peerReviewStore.getPeerReview(essayId, "AI");
+    const aiReview = await this.fetchReviewData(title, content);
     
-    if (existingReview) {
-      await this.peerReviewStore.updatePeerReview(existingReview.id, {
-        grammarScore: aiReview.grammarScore,
-        styleScore: aiReview.styleScore,
-        clarityScore: aiReview.clarityScore,
-        structureScore: aiReview.structureScore,
-        contentScore: aiReview.contentScore,
-        researchScore: aiReview.researchScore,
-        overallScore: aiReview.overallScore,
-        corrections: aiReview.corrections,
+    console.log(`[AiService] Analysis result for ${essayId}: Offensive=${aiReview.isOffensive}`);
+
+    if (aiReview.isOffensive) {
+      console.warn(`[AiService] 🚩 FLAGGED OFFENSIVE CONTENT: Essay ${essayId}`);
+      
+      await this.essayStore.updateEssay(essayId, { 
+        isPublic: false, 
+        isAnalyzed: true 
       });
-    } else {
-      await this.peerReviewStore.createPeerReview({
-        essayId: essayId,
-        reviewerId: "AI",
-        grammarScore: aiReview.grammarScore,
-        styleScore: aiReview.styleScore,
-        clarityScore: aiReview.clarityScore,
-        structureScore: aiReview.structureScore,
-        contentScore: aiReview.contentScore,
-        researchScore: aiReview.researchScore,
-        overallScore: aiReview.overallScore,
-        corrections: aiReview.corrections,
-        isSubmitted: true,
-      });
+
+      const warningComment = `⚠️ CONTEÚDO SINALIZADO: Esta redação foi identificada como ofensiva ou imprópria. Ela foi tornada privada automaticamente.\n\nMotivo: ${aiReview.offenseReason || "Violação de diretrizes."}`;
+
+      await this.saveReviewInDatabase(essayId, aiReview, warningComment);
+      return;
     }
 
-    await this.essayStore.updateEssay(essayId, { isAnalyzed: true, isPublic: true });
+
+    await this.essayStore.updateEssay(essayId, { isAnalyzed: true });
+    
+    await this.saveReviewInDatabase(essayId, aiReview, null);
+  }
+
+  /**
+   * Auxiliar: Decide se usa IA Real ou Mock e retorna os dados padronizados.
+   */
+  private async fetchReviewData(title: string, content: string): Promise<AIReviewResult> {
+    const useRealAi = process.env.NODE_ENV === 'production' || process.env.USE_REAL_AI === 'true';
+
+    if (useRealAi) {
+      try {
+        console.log(`[AiService] Calling OpenAI/Groq...`);
+        return await analyzeEssayWithOpenAI(title, content);
+      } catch (error) {
+        console.error("[AiService] AI API failed, falling back to mock:", error);
+        return this.getMockData(title, content);
+      }
+    }
+
+    console.log(`[AiService] Using Mock AI...`);
+    return this.getMockData(title, content);
+  }
+
+  /**
+   * Auxiliar: Garante que o Mock tenha a estrutura nova (com campos de moderação)
+   */
+  private getMockData(title: string, content: string): AIReviewResult {
+    const mock = getMockAIReview(title, content);
+    return {
+      ...mock,
+      isOffensive: false, // Mock é sempre seguro
+      offenseReason: undefined
+    };
+  }
+
+  /**
+   * Auxiliar: Lógica de UPSERT (Criar ou Atualizar) da Review no Banco
+   */
+  private async saveReviewInDatabase(essayId: string, aiReview: AIReviewResult, overrideComment: string | null) {
+    const reviewData = {
+      grammarScore: aiReview.grammarScore,
+      styleScore: aiReview.styleScore,
+      clarityScore: aiReview.clarityScore,
+      structureScore: aiReview.structureScore,
+      contentScore: aiReview.contentScore,
+      researchScore: aiReview.researchScore,
+      overallScore: aiReview.overallScore,
+      corrections: aiReview.corrections,
+      reviewComment: overrideComment || "Análise automática da IA.", 
+      isSubmitted: true
+    };
+
+    const existingReview = await this.peerReviewStore.getPeerReview(essayId, "AI");
+
+    if (existingReview) {
+      await this.peerReviewStore.updatePeerReview(existingReview.id, reviewData);
+    } else {
+      await this.peerReviewStore.createPeerReview({
+        ...reviewData,
+        essayId: essayId,
+        reviewerId: "AI",
+      });
+    }
   }
 }

@@ -3,14 +3,10 @@ import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { type CorrectionObject } from "@shared/schema";
 
-// Inicializa o cliente (pega a chave do process.env.OPENAI_API_KEY automaticamente)
 const openai = new OpenAI();
 
-// 1. Definimos o Schema que a OpenAI DEVE seguir.
-// Isso garante que a resposta sempre venha no formato exato que precisamos.
 const AiCorrectionSchema = z.object({
   category: z.enum(['grammar', 'style', 'clarity', 'structure', 'content', 'research']),
-  // A IA deve retornar o texto exato que ela quer corrigir para buscarmos o índice depois
   exactQuote: z.string(),
   comment: z.string(),
 });
@@ -22,11 +18,12 @@ const AiResponseSchema = z.object({
   structureScore: z.number(),
   contentScore: z.number(),
   researchScore: z.number(),
-  overallScore: z.number(),
+  isOffensive: z.boolean().describe("True if the essay contains hate speech, explicit violence, sexual content, or severe harassment."),
+  offenseReason: z.string().nullable().optional().describe("If offensive, a brief explanation in Portuguese."),
   corrections: z.array(AiCorrectionSchema),
 });
 
-interface AIReviewResult {
+export interface AIReviewResult {
   grammarScore: number;
   styleScore: number;
   clarityScore: number;
@@ -34,6 +31,10 @@ interface AIReviewResult {
   contentScore: number;
   researchScore: number;
   overallScore: number;
+
+  isOffensive: boolean;
+  offenseReason?: string;
+
   corrections: CorrectionObject[];
 }
 
@@ -59,6 +60,11 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
           LANGUAGE INSTRUCTIONS:
           - **All comments and feedback text MUST be in Portuguese (Português do Brasil).**
           - **JSON Keys and Category values (e.g., 'grammar', 'style') MUST remain in English.**
+  
+          MODERATION GUIDE (CRITICAL):
+          - Check for: Hate speech, racism, severe profanity, explicit sexual content, promotion of self-harm or violence.
+          - If found, set "isOffensive" to true and provide "offenseReason".
+          - If the text is just poorly written or controversial but academic, it is NOT offensive.
 
           Scoring Guide:
           - Evaluate 6 categories: grammar, style, clarity, structure, content, research.
@@ -80,6 +86,8 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
             "structureScore": number,
             "contentScore": number,
             "researchScore": number,
+            "isOffensive": boolean,
+            "offenseReason": string | null,
             "overallScore": number,
             "corrections": [
               { "category": "grammar"|"style"|"clarity"|"structure"|"content"|"research", "exactQuote": "string", "comment": "string (IN PORTUGUESE)" }
@@ -112,12 +120,9 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
       aiResponse.contentScore + 
       aiResponse.researchScore;
 
-  // 2. Pós-processamento: Calcular índices reais
-  // A IA nos deu o texto ("exactQuote"), agora precisamos achar onde ele está no conteúdo original.
     const finalCorrections: CorrectionObject[] = aiResponse.corrections.map(c => {
     const startIndex = content.indexOf(c.exactQuote);
     
-    // Se não achou (a IA alucinou o texto), retornamos -1 para filtrar depois ou lidamos com fallback
     if (startIndex === -1) {
       console.warn(`[Grog] Could not find quote: "${c.exactQuote}"`);
       return null;
@@ -134,8 +139,9 @@ export async function analyzeEssayWithOpenAI(title: string, content: string): Pr
 
   return {
     ...aiResponse,
-    overallScore:calculatedOverallScore,
-    corrections: finalCorrections
+    overallScore: aiResponse.isOffensive ? 0 : calculatedOverallScore,
+    corrections: finalCorrections,
+    offenseReason: aiResponse.offenseReason
   };
 } catch (error) {
     console.error("Erro na chamada da Groq:", error);
