@@ -369,7 +369,7 @@ export function UserProfile() {
             <UserPlus className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">Discover</span>
           </TabsTrigger>
-          <TabsTrigger value="settings shrink-0" className="flex items-center gap-2">
+          <TabsTrigger value="settings" className="flex items-center gap-2 shrink-0">
             <Settings className="w-4 h-4" />
            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
@@ -579,12 +579,12 @@ export function UserProfile() {
                               <h4 className="font-semibold">{profileUser.displayName}</h4>
                               <p className="text-sm text-muted-foreground">@{profileUser.username}</p>
                               <div className="flex items-center space-x-4 mt-1">
-                                <span className="text-xs text-muted-foreground">
+                               {/*} <span className="text-xs text-muted-foreground">
                                   {profileUser.totalEssays} essays
                                 </span>
                                 <span className="text-xs text-muted-foreground">
                                   Level {profileUser.level}
-                                </span>
+                                </span>*/}
                               </div>
                             </div>
                           </Link>
@@ -604,7 +604,7 @@ export function UserProfile() {
                                 data-testid={`button-add-friend-${profileUser.userId}`}
                               >
                                 <UserPlus className="w-4 h-4" />
-                                Connect
+                                <span className="hidden sm:inline">Connect</span>
                               </Button>
                             )}
                           </div>

@@ -188,31 +188,37 @@ export function InspirationsFeed() {
           {filteredInspirations.map((inspiration) => (
             <Card key={inspiration.id} className="hover:shadow-md transition-shadow" data-testid={`inspiration-card-${inspiration.id}`}>
               <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-semibold">{inspiration.title}</h3>
-                      <Badge className={getCategoryColor(inspiration.category)}>
-                        {inspiration.category}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        <span>{inspiration.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{inspiration.readTime} min read</span>
-                      </div>
-                      <Badge variant="outline" className={getDifficultyColor(inspiration.difficulty)}>
-                        {inspiration.difficulty}
-                      </Badge>
-                      <span className="capitalize">{inspiration.type}</span>
-                    </div>
-                  </div>
-                </div>
+<div className="flex flex-col gap-4 mb-4"> {/* Mudei a estrutura base para flex-col */}
+    
+    {/* 1. Título e Categoria Badge */}
+    <div className="flex justify-between items-start gap-4">
+      <h3 className="text-xl font-semibold break-words pr-2">
+        {inspiration.title}
+      </h3>
+      <Badge className={`${getCategoryColor(inspiration.category)} shrink-0`}> {/* shrink-0 impede o badge de ser esmagado */}
+        {inspiration.category}
+      </Badge>
+    </div>
+    
+    {/* 2. Metadados com flex-wrap (A correção principal) */}
+    <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-muted-foreground">
+      <div className="flex items-center gap-1 min-w-fit">
+        <User className="w-4 h-4 shrink-0" /> {/* shrink-0 protege o ícone */}
+        <span className="truncate max-w-[150px]">{inspiration.author}</span>
+      </div>
+      
+      <div className="flex items-center gap-1 min-w-fit">
+        <Clock className="w-4 h-4 shrink-0" />
+        <span>{inspiration.readTime} min read</span>
+      </div>
+      
+      <Badge variant="outline" className={getDifficultyColor(inspiration.difficulty)}>
+        {inspiration.difficulty}
+      </Badge>
+      
+      <span className="capitalize">{inspiration.type}</span>
+    </div>
+  </div>
                 
                 <div className="prose prose-sm max-w-none mb-4">
                   <div className="whitespace-pre-line text-foreground leading-relaxed">

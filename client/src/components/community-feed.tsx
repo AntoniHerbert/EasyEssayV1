@@ -199,12 +199,12 @@ export function CommunityFeed() {
                       </div>
                       
                       <Link href={`/essay/${essay.id}`}>
-                        <h3 className="text-xl font-semibold mb-3 hover:text-primary cursor-pointer transition-colors" data-testid={`essay-title-${essay.id}`}>
+                        <h3 className="text-xl font-semibold mb-3 hover:text-primary cursor-pointer transition-colors break-words" data-testid={`essay-title-${essay.id}`}>
                           {essay.title}
                         </h3>
                       </Link>
                       
-                      <p className="text-muted-foreground mb-4 line-clamp-3">
+                      <p className="text-muted-foreground mb-4 line-clamp-3 break-words">
                         {essay.content.substring(0, 300)}...
                       </p>
                       
