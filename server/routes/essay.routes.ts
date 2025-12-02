@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { essayService } from "../services"; 
-import { userCorrectionService } from "../services";
 import { essayLikeService } from "../services"; 
 import { peerReviewService } from "../services";
 import { aiService } from "../services";
@@ -47,11 +46,6 @@ try {
     }
     throw error;
   }
-}));
-
-router.get("/:id/user-corrections", catchAsync(async (req, res) => {
-const userCorrections = await userCorrectionService.getCorrectionsByEssayId(req.params.id);
-res.json(userCorrections);
 }));
 
 router.get("/:id/likes", catchAsync(async (req, res) => {
@@ -118,12 +112,6 @@ router.post("/:id/analyze", catchAsync(async (req, res) => {
     return res.status(404).json({ message: "Essay not found" });
   }
   res.json(result);
-}));
-
-router.post("/:id/user-corrections", catchAsync(async (req, res) => {
-
-  const userCorrection = await userCorrectionService.createCorrection(req.params.id, req.body);
-  res.status(201).json(userCorrection);
 }));
 
 router.post("/:id/like", catchAsync(async (req, res) => {

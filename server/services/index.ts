@@ -5,7 +5,6 @@ import {
   essayStore,
   peerReviewStore,
   essayLikeStore,
-  userCorrectionStore,
   inspirationStore,
   friendshipStore,
   messageStore,
@@ -18,7 +17,6 @@ import { EssayService } from "./essay.service";
 import { AiService } from "./ai.service";
 import { ProfileService } from "./profile.service";
 import { PeerReviewService } from "./peerReview.service";
-import { UserCorrectionService } from "./userCorrection.service";
 import { EssayLikeService } from "./essayLike.service";
 import { InspirationService } from "./inspiration.service";
 import { FriendshipService } from "./friendship.service";
@@ -41,9 +39,6 @@ export const profileService = new ProfileService(profileStore, transactionManage
 
 // PeerReviewService precisa de peerReview e essay
 export const peerReviewService = new PeerReviewService(peerReviewStore, essayStore, transactionManager);
-
-// UserCorrectionService precisa de userCorrection
-export const userCorrectionService = new UserCorrectionService(userCorrectionStore, transactionManager);
 
 // EssayLikeService precisa de essayLike
 export const essayLikeService = new EssayLikeService(essayLikeStore, transactionManager);

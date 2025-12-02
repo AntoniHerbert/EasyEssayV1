@@ -8,7 +8,6 @@ import { IProfileStore } from './profiles/profile.store';
 import { IEssayStore } from './essays/essay.store'; 
 import { IPeerReviewStore } from './peerReviews/peerReview.store'; 
 import { IEssayLikeStore } from './essayLikes/essayLike.store'; 
-import { IUserCorrectionStore } from './userCorrections/userCorrections.store'; 
 import { IInspirationStore } from './inspirations/inspiration.store'; 
 import { IFriendshipStore } from './friendships/friendship.store'; 
 import { IMessageStore } from './messages/message.store';
@@ -18,7 +17,6 @@ import { ProfileDbStore } from './profiles/profile.db.store';
 import { EssayDbStore } from './essays/essay.db.store'; 
 import { PeerReviewDbStore } from './peerReviews/peerReview.db.store';
 import { EssayLikeDbStore } from './essayLikes/essayLike.db.store'; 
-import { UserCorrectionDbStore } from './userCorrections/userCorrections.db.store'; 
 import { InspirationDbStore } from './inspirations/inspiration.db.store'; 
 import { FriendshipDbStore } from './friendships/friendship.db.store'; 
 import { MessageDbStore } from './messages/message.db.store'; 
@@ -28,7 +26,6 @@ import { ProfileMemStore } from './profiles/profile.mem.store';
 import { EssayMemStore } from './essays/essay.mem.store'; 
 import { PeerReviewMemStore } from './peerReviews/peerReview.mem.store'; 
 import { EssayLikeMemStore } from './essayLikes/essayLike.mem.store';
-import { UserCorrectionMemStore } from './userCorrections/userCorrections.mem.store'; 
 import { InspirationMemStore } from './inspirations/inspiration.mem.store'; 
 import { FriendshipMemStore } from './friendships/friendship.mem.store';
 import { MessageMemStore } from './messages/message.mem.store';
@@ -42,7 +39,6 @@ let profileStore: IProfileStore;
 let essayStore: IEssayStore; 
 let peerReviewStore: IPeerReviewStore;
 let essayLikeStore: IEssayLikeStore; 
-let userCorrectionStore: IUserCorrectionStore;
 let inspirationStore: IInspirationStore; 
 let friendshipStore: IFriendshipStore;
 let messageStore: IMessageStore; 
@@ -56,7 +52,6 @@ if (process.env.NODE_ENV === 'test') {
   essayStore = new EssayMemStore();
   peerReviewStore = new PeerReviewMemStore();
   essayLikeStore = new EssayLikeMemStore();
-  userCorrectionStore = new UserCorrectionMemStore();
   inspirationStore = new InspirationMemStore();
   friendshipStore = new FriendshipMemStore();
   messageStore = new MessageMemStore(); 
@@ -73,7 +68,6 @@ if (process.env.NODE_ENV === 'test') {
   essayStore = new EssayDbStore(db); 
   peerReviewStore = new PeerReviewDbStore(db);
   essayLikeStore = new EssayLikeDbStore(db); 
-  userCorrectionStore = new UserCorrectionDbStore(db); 
   inspirationStore = new InspirationDbStore(db); 
   friendshipStore = new FriendshipDbStore(db); 
   messageStore = new MessageDbStore(db); 
@@ -86,7 +80,6 @@ export {
   essayStore,
   peerReviewStore,
   essayLikeStore,
-  userCorrectionStore,
   inspirationStore,
   friendshipStore,
   messageStore,
