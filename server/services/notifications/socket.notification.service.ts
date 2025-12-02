@@ -17,4 +17,12 @@ export class SocketNotificationService implements INotificationService {
 
     this.io.to(targetUserId).emit("new_message", message);
   }
+
+  notifyFriendRequest(targetUserId: string, requesterName: string): void {
+  if (this.io) {
+    this.io.to(targetUserId).emit("friend_request", { 
+      message: `${requesterName} sent you a friend request!` 
+    });
+  }
+}
 }

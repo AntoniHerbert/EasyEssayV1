@@ -75,28 +75,40 @@ export class EssayService {
     return essay;
   }
 
-async updateEssay(id: string, data: UpdateEssayInput) {
+async updateEssay(essayId: string, requestingUserId: string, data: UpdateEssayInput) {
+
+  const essay = await this.essayStore.getEssay(essayId);
+    
+    if (!essay) return null;
+
+    if (essay.authorId !== requestingUserId) {
+      throw new Error("FORBIDDEN_ACCESS");
+    }
   
     if (data.content) {
       data.wordCount = data.content.trim().split(/\s+/).filter(word => word.length > 0).length;
     }
     
-    return await this.essayStore.updateEssay(id, data);
+    return await this.essayStore.updateEssay(essayId, data);
   }
 
-  async deleteEssay(id: string) {
-    const essay = await this.essayStore.getEssay(id);
+  async deleteEssay(essayId: string, requestingUserId: string) {
+    const essay = await this.essayStore.getEssay(essayId);
     if (!essay) return false;
+
+    if (essay.authorId !== requestingUserId) {
+      throw new Error("FORBIDDEN_ACCESS");
+    }
 
     await this.txManager.transaction(async (tx) => {
 
       await Promise.all([
-        this.peerReviewStore.deleteByEssayId(id, tx),
-        this.essayLikeStore.deleteByEssayId(id, tx),
-        this.userCorrectionStore.deleteByEssayId(id, tx)
+        this.peerReviewStore.deleteByEssayId(essayId, tx),
+        this.essayLikeStore.deleteByEssayId(essayId, tx),
+        this.userCorrectionStore.deleteByEssayId(essayId, tx)
       ]);
 
-      await this.essayStore.deleteEssay(id, tx);
+      await this.essayStore.deleteEssay(essayId, tx);
     });
 
     return true;

@@ -1,6 +1,6 @@
 import { type DrizzleDb } from "../index";
 import * as schema from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { type UserProfile, type InsertUserProfile } from "@shared/schema";
 import { IProfileStore } from "./profile.store";
 import { type Tx } from "../types"; 
@@ -13,17 +13,42 @@ export class ProfileDbStore implements IProfileStore {
     this.db = db;
   }
 
-  async getAllUsers(): Promise<UserProfile[]> {
-    const result = await this.db.select().from(schema.userProfiles);
-    return result;
+  async getAllUsers(): Promise<schema.UserProfileWithAuth[]> {
+    const rows = await this.db
+    .select({
+      profile: schema.userProfiles,
+      authUsername: schema.users.username,
+  })
+    .from(schema.userProfiles)
+    .leftJoin(
+      schema.users,
+      eq(schema.userProfiles.userId, schema.users.id)
+    )
+    return rows.map(({ profile, authUsername }) => ({
+      ...profile,
+      username: authUsername || "Unknown"
+    }));
   }
 
-  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+  async getUserProfile(userId: string): Promise<schema.UserProfileWithAuth | undefined> {
     const result = await this.db
-      .select()
+      .select({
+        profile: schema.userProfiles,
+        authUsername: schema.users.username,
+      })
       .from(schema.userProfiles)
+      .leftJoin(
+        schema.users, 
+        eq(schema.userProfiles.userId, schema.users.id)
+      )
       .where(eq(schema.userProfiles.userId, userId));
-    return result[0];
+const row = result[0];
+    if (!row) return undefined;
+
+    return {
+      ...row.profile,
+      username: row.authUsername || "Unknown"
+    };
   }
 
   async createUserProfile(profile: InsertUserProfile, tx?: Tx): Promise<UserProfile> {

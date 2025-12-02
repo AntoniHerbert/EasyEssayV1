@@ -15,13 +15,15 @@ import { isAuthenticated } from "./middlewares/isAuthenticated";
 const router = Router();
 
 // =================================================================
-// 🚀 Rotas Públicas
+// 🔒 Rotas Protegidas
 // =================================================================
+
+router.use(isAuthenticated);
 
 router.get("/", catchAsync(async (req, res) => {
   const { isPublic, authorId } = req.query;
   const essays = await essayService.getEssays(
-    req.session.userId, // <--- NOVO
+    req.session.userId, 
     isPublic as string, 
     authorId as string
   );
@@ -49,21 +51,14 @@ try {
 }));
 
 router.get("/:id/likes", catchAsync(async (req, res) => {
-const likes = await essayLikeService.getLikes(req.params.id);
-  res.json({ count: likes.length });
+const likes = await essayLikeService.getLikesCount(req.params.id);
+  res.json({ count: likes });
 }));
 
 router.get("/:essayId/peer-reviews", catchAsync(async (req, res) => {
 const reviews = await peerReviewService.getReviewsByEssayId(req.params.essayId);
 res.json(reviews);
 }));
-
-
-// =================================================================
-// 🔒 Rotas Protegidas
-// =================================================================
-
-router.use(isAuthenticated);
 
 router.post("/", 
   validateBody(createEssayDTO), 
@@ -76,21 +71,41 @@ router.post("/",
 router.put("/:id",
   validateBody(updateEssayDTO),
   catchAsync(async (req, res) => {
+    try {
+        const updatedEssay = await essayService.updateEssay(
+          req.params.id, 
+          req.session.userId!, 
+          req.body
+        );
+        
+        if (!updatedEssay) return res.status(404).json({ message: "Essay not found" });
+        res.json(updatedEssay);
 
-  const updatedEssay = await essayService.updateEssay(req.params.id, req.body);
-  if (!updatedEssay) {
-    return res.status(404).json({ message: "Essay not found" });
-  }
-  res.json(updatedEssay);
+      } catch (error: any) {
+        if (error.message === "FORBIDDEN_ACCESS") {
+          return res.status(403).json({ message: "You are not allowed to edit this essay" });
+        }
+        throw error;
+      }
 }));
 
 router.delete("/:id", catchAsync(async (req, res) => {
 
-  const deleted = await essayService.deleteEssay(req.params.id);
-  if (!deleted) {
-    return res.status(404).json({ message: "Essay not found" });
-  }
-  res.status(204).send();
+  try {
+      const deleted = await essayService.deleteEssay(
+        req.params.id, 
+        req.session.userId!
+      );
+
+      if (!deleted) return res.status(404).json({ message: "Essay not found" });
+      res.status(204).send();
+
+    } catch (error: any) {
+      if (error.message === "FORBIDDEN_ACCESS") {
+        return res.status(403).json({ message: "You are not allowed to delete this essay" });
+      }
+      throw error;
+    }
 }));
 
 /**
@@ -115,11 +130,23 @@ router.post("/:id/analyze", catchAsync(async (req, res) => {
 }));
 
 router.post("/:id/like", catchAsync(async (req, res) => {
-  const userId = req.session.userId!;
-  const essayId = req.params.id;
-  const result = await essayLikeService.toggleLike(essayId, userId); 
-  
-  res.json(result);
+  try {
+      const userId = req.session.userId!;
+      const essayId = req.params.id;
+      const result = await essayLikeService.toggleLike(essayId, userId); 
+      res.json(result);
+    } catch (error: any) {
+      if (error.message === "ESSAY_NOT_FOUND") {
+        return res.status(404).json({ message: "Essay not found" });
+      }
+      if (error.message === "FORBIDDEN_ACCESS") {
+        return res.status(403).json({ message: "You cannot like a private essay" });
+      }
+      if (error.message === "CANNOT_LIKE_OWN_ESSAY") {
+        return res.status(400).json({ message: "You cannot like your own essay" });
+      }
+      throw error;
+    }
 }));
 
 router.post("/:essayId/peer-reviews", catchAsync(async (req, res) => {

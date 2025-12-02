@@ -4,6 +4,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { type Essay, type InsertEssay } from "@shared/schema";
 import { IEssayStore } from "./essay.store";
 import { type Tx } from "../types"; 
+import { profile } from "console";
 
 export class EssayDbStore implements IEssayStore {
   private db;
@@ -13,12 +14,37 @@ export class EssayDbStore implements IEssayStore {
   }
 
   async getEssay(id: string): Promise<Essay | undefined> {
-    const result = await this.db.select().from(schema.essays).where(eq(schema.essays.id, id));
-    return result[0];
+    const result = await this.db
+    .select({
+      essay: schema.essays,
+      profileDisplayName: schema.userProfiles.displayName,
+    })
+    .from(schema.essays)
+    .leftJoin(
+      schema.userProfiles,
+      eq(schema.essays.authorId, schema.userProfiles.userId)
+    )
+    .where(eq(schema.essays.id, id));
+
+    const row = result[0];
+    if (!row) return undefined;
+
+    return {
+      ...row.essay,
+      authorName: row.profileDisplayName || row.essay.authorName || "Anonymous"
+    };
   }
 
   async getEssays(isPublic?: boolean, authorId?: string): Promise<Essay[]> {
-    let query = this.db.select().from(schema.essays);
+    let query = this.db
+    .select({
+      essay: schema.essays,
+      profileDisplayName: schema.userProfiles.displayName,
+    }).from(schema.essays)
+    .leftJoin(
+      schema.userProfiles,
+      eq(schema.essays.authorId, schema.userProfiles.userId)
+    );
     
     const conditions = [];
     if (isPublic !== undefined) {
@@ -29,11 +55,15 @@ export class EssayDbStore implements IEssayStore {
     }
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
+      query = query.where(and(...conditions));
     }
+
+    const rows = await query.orderBy(desc(schema.essays.updatedAt));
     
-    const result = await query.orderBy(desc(schema.essays.updatedAt));
-    return result;
+    return rows.map(({ essay, profileDisplayName }) => ({
+      ...essay,
+      authorName: profileDisplayName || essay.authorName || "Anonymous"
+    }));
   }
 
   async createEssay(insertEssay: InsertEssay, tx?: Tx): Promise<Essay> {

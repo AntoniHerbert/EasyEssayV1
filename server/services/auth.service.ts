@@ -4,6 +4,8 @@ import type { ITransactionManager } from "../storage/transaction";
 import { hashPassword, verifyPassword } from "../auth"; 
 import { LoginInput, RegisterInput } from "@shared/schema";
 
+const DUMMY_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.1234567890abcdef1234567890abcdef";
+
 export class AuthService {
 
     constructor(
@@ -31,7 +33,6 @@ export class AuthService {
 
     await this.profileStore.createUserProfile({
       userId: user.id,
-      username: data.username,
       displayName: data.displayName,
       bio: data.bio || "",
     }, tx);
@@ -48,18 +49,30 @@ export class AuthService {
   async loginUser(data: LoginInput) {
 
     const user = await this.userStore.getUserByUsername(data.username);
+
+    const hashToVerify = user ? user.passwordHash : DUMMY_HASH;
     
-    if (!user || !(await verifyPassword(user.passwordHash, data.password))) {
+    const isPasswordValid = await verifyPassword(hashToVerify, data.password);
+    
+    if (!user || !isPasswordValid) {
       throw new Error("INVALID_CREDENTIALS");
     }
 
-    return user;
+    return this.sanitizeUser(user);
   }
 
   /**
    * Busca o usuário atual pelo ID da sessão.
    */
   async getCurrentUser(userId: string) {
-    return await this.userStore.getUser(userId);
+    const user = await this.userStore.getUser(userId);
+    if (!user) return null;
+    
+    return this.sanitizeUser(user);
+    }
+
+  private sanitizeUser(user: any) {
+    const { passwordHash, ...safeUser } = user;
+    return safeUser;
   }
 }

@@ -24,20 +24,6 @@ export const essays = pgTable("essays", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const userCorrections = pgTable("user_corrections", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  essayId: varchar("essay_id").notNull(),
-  userId: varchar("user_id").notNull(),
-  userName: text("user_name").notNull(),
-  originalText: text("original_text").notNull(),
-  suggestedText: text("suggested_text").notNull(),
-  explanation: text("explanation").notNull(),
-  startIndex: integer("start_index").notNull(),
-  endIndex: integer("end_index").notNull(),
-  likes: integer("likes").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
 export const essayLikes = pgTable("essay_likes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   essayId: varchar("essay_id").notNull(),
@@ -65,7 +51,6 @@ export const inspirations = pgTable("inspirations", {
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique(),
-  username: text("username").notNull().unique(),
   displayName: text("display_name").notNull(),
   bio: text("bio"),
   avatar: text("avatar"), 
@@ -224,6 +209,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = insertUserSchema.omit({ id: true, createdAt: true, passwordHash: true }).extend({
   password: z.string(),
+  username: z.string(),
   displayName: z.string().min(1, "Display name is required"),
   bio: z.string().optional(),
 });
@@ -231,7 +217,10 @@ export const registerSchema = insertUserSchema.omit({ id: true, createdAt: true,
 export const createFriendshipSchema = insertFriendshipSchema.omit({ 
   id: true, requesterId: true, status: true, createdAt: true, updatedAt: true 
 });
-export const updateFriendshipSchema = insertFriendshipSchema.partial();
+
+export const updateFriendshipSchema = z.object({
+  status: z.enum(["accepted", "rejected"]), 
+});
 
 export const createMessageSchema = insertUserMessageSchema.omit({ 
   id: true, fromUserId: true, isRead: true, createdAt: true 
@@ -265,3 +254,7 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateFriendshipInput = z.infer<typeof createFriendshipSchema>;
 export type UpdateFriendshipInput = z.infer<typeof updateFriendshipSchema>;
 export type CreateMessageInput = z.infer<typeof createMessageSchema>;
+
+export type CreatePeerReviewInput = Omit<InsertPeerReview, 'id' | 'createdAt' | 'updatedAt' | 'essayId' | 'reviewerId'>;
+
+export type UserProfileWithAuth = typeof userProfiles.$inferSelect & { username: string };

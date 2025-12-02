@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { inspirationService } from "server/services";
 import { catchAsync } from "./middlewares/errorHandler"; 
+import { isAuthenticated } from "./middlewares/isAuthenticated";
 
 const router = Router();
 
 // =================================================================
-// 🚀 Rotas Públicas (Não exigem login)
+// 🔒 Rotas Protegidas
 // =================================================================
+
+router.use(isAuthenticated);
 
 /**
  * Busca uma lista de inspirações (temas, prompts, etc.)

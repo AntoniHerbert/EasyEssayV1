@@ -41,13 +41,13 @@ export const profileService = new ProfileService(profileStore, transactionManage
 export const peerReviewService = new PeerReviewService(peerReviewStore, essayStore, transactionManager);
 
 // EssayLikeService precisa de essayLike
-export const essayLikeService = new EssayLikeService(essayLikeStore, transactionManager);
+export const essayLikeService = new EssayLikeService(essayLikeStore, essayStore, transactionManager);
 
 // InspirationService precisa de inspiration
 export const inspirationService = new InspirationService(inspirationStore, transactionManager);
 
 // FriendshipService precisa de friendship
-export const friendshipService = new FriendshipService(friendshipStore, transactionManager);
+export const friendshipService = new FriendshipService(friendshipStore, profileStore, notificationService, transactionManager);
 
 // MessageService precisa de message
 export const messageService = new MessageService(notificationService, messageStore, transactionManager);

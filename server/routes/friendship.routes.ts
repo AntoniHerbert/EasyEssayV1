@@ -19,12 +19,19 @@ router.use(isAuthenticated);
  */
 router.get("/:userId", catchAsync(async (req, res) => {
   
-  const { status } = req.query;
-  const friendships = await friendshipService.getFriendships(
-    req.params.userId,
-    status as string
-  );
-  res.json(friendships);
+  try {
+      const friendships = await friendshipService.getFriendships(
+        req.params.userId,  
+        req.session.userId!, 
+        req.query.status as string
+      );
+      res.json(friendships);
+    } catch (error: any) {
+      if (error.message === "FORBIDDEN_ACCESS") {
+        return res.status(403).json({ message: "You can only view your own friendships" });
+      }
+      throw error;
+    }
 }));
 
 /**

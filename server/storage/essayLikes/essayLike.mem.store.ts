@@ -10,9 +10,12 @@ export class EssayLikeMemStore implements IEssayLikeStore {
     this.essayLikes = new Map();
   }
 
-  async getEssayLikes(essayId: string): Promise<EssayLike[]> {
-    return Array.from(this.essayLikes.values())
-      .filter(like => like.essayId === essayId);
+  async countEssayLikes(essayId: string): Promise<number> {
+    let count = 0;
+    for (const like of this.essayLikes.values()) {
+      if (like.essayId === essayId) count++;
+    }
+    return count;
   }
 
   async createEssayLike(insertEssayLike: InsertEssayLike, _tx?: Tx): Promise<EssayLike> {

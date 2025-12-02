@@ -5,7 +5,8 @@ import {
   insertPeerReviewSchema , 
   correctionSchema,
   UpdatePeerReviewInput,
-  AddCorrectionInput
+  AddCorrectionInput,
+  CreatePeerReviewInput
 } from "@shared/schema";
 
 export class PeerReviewService {
@@ -28,7 +29,7 @@ export class PeerReviewService {
    * Retorna um objeto indicando o resultado e se foi criada agora ou já existia.
    * Lança erros para casos de negócio inválidos (404 ou 403).
    */
-  async createReview(essayId: string, reviewerId: string, rawBody: unknown) {
+  async createReview(essayId: string, reviewerId: string, data: CreatePeerReviewInput) {
     const essay = await this.essayStore.getEssay(essayId);
     if (!essay) {
       throw new Error("ESSAY_NOT_FOUND");
@@ -44,7 +45,7 @@ export class PeerReviewService {
     }
 
     const reviewData = insertPeerReviewSchema.parse({
-      ...(rawBody as object),
+      ...data,
       reviewerId,
       essayId
     });

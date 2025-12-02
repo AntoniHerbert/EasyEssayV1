@@ -50,10 +50,9 @@ export class MessageService {
 
     const decryptedMessage = {
       ...message,
-      content: data.content // Usamos o texto original que já temos em memória
+      content: data.content 
     };
 
-    // 2. Avisamos o serviço de notificação
     this.notificationService.notifyNewMessage(message.toUserId, decryptedMessage);
 
     return message;
@@ -67,7 +66,6 @@ export class MessageService {
     const message = await this.messageStore.getMessageById(messageId);
 
     if (!message) {
- 
       throw new Error("MESSAGE_NOT_FOUND");
     }
 
@@ -76,7 +74,7 @@ export class MessageService {
     }
 
     if (message.isRead){
-        return message;
+        return { ...message, content: decrypt(message.content) };
     }
 
 
@@ -85,6 +83,9 @@ export class MessageService {
       throw new Error("MESSAGE_NOT_FOUND");
     }
     
-    return updated;
+    return {
+      ...updated,
+      content: decrypt(updated.content)
+    };
   }
 }

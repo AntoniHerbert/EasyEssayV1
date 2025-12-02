@@ -7,13 +7,15 @@ import { createProfileSchema, updateProfileSchema } from "@shared/schema";
 
 const router = Router();
 
+
 // =================================================================
-// 🚀 Rotas Públicas (Não exigem login)
+// 🔒 Rotas Protegidas (Exigem login)
 // =================================================================
+
+router.use(isAuthenticated);
 
 /**
  * Busca um perfil de usuário público.
- * Qualquer pessoa (logada ou não) pode ver o perfil de outro usuário.
  */
 router.get("/:userId", catchAsync(async (req, res) => {
 const profile = await profileService.getProfileByUserId(req.params.userId); 
@@ -41,13 +43,6 @@ router.post("/", validateBody(createProfileSchema), catchAsync(async (req, res) 
       throw error;
     }
 }));
-
-
-// =================================================================
-// 🔒 Rotas Protegidas (Exigem login)
-// =================================================================
-
-router.use(isAuthenticated);
 
 /**
  * Atualiza o perfil do próprio usuário.

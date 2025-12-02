@@ -1,34 +1,20 @@
 import { Router } from "express";
 import { profileService } from "server/services";
 import { catchAsync } from "./middlewares/errorHandler"; 
+import { isAuthenticated } from "./middlewares/isAuthenticated";
 
 const router = Router();
 
 // =================================================================
-// 🚀 Rota Pública (ou de Admin)
+// 🔒 Rotas Protegidas (Exigem login)
 // =================================================================
+
+router.use(isAuthenticated);
 
 /**
  * Busca uma lista de todos os usuários no sistema.
  */
 router.get("/", catchAsync(async (req, res) => {
-  // =================================================================
-  // ⚠️ ATENÇÃO: COMENTÁRIO DE SEGURANÇA
-  // =================================================================
-  //
-  // 1. ROTA PÚBLICA:
-  // A lógica original (mantida aqui) não tinha autenticação.
-  // Isso significa que QUALQUER pessoa na internet pode chamar
-  // este endpoint e ver a lista de TODOS os usuários cadastrados.
-  //
-  // RECOMENDAÇÃO:
-  // Esta rota quase sempre deve ser protegida e disponível
-  // apenas para administradores.
-  //
-  // Exemplo de proteção (admin):
-  // router.get("/", isAuthenticated, isAdmin, catchAsync(async (req, res) => { ...
-  //
-  // =================================================================
 
 const users = await profileService.getAllProfiles();
   res.json(users);

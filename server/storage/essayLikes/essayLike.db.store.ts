@@ -13,12 +13,15 @@ export class EssayLikeDbStore implements IEssayLikeStore {
     this.db = db;
   }
 
-  async getEssayLikes(essayId: string): Promise<EssayLike[]> {
+  
+
+  async countEssayLikes(essayId: string): Promise<number> {
     const result = await this.db
-      .select()
+      .select({ value: count() })
       .from(schema.essayLikes)
       .where(eq(schema.essayLikes.essayId, essayId));
-    return result;
+      
+    return result[0].value;
   }
 
   async createEssayLike(like: InsertEssayLike, tx?: Tx): Promise<EssayLike> {
