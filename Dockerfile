@@ -9,13 +9,13 @@ COPY package*.json ./
 # Instala dependências
 RUN npm install
 
-RUN npm run build
-
 # Copia o restante do projeto
 COPY . .
+
+RUN npm run build
 
 # Expõe a porta da aplicação
 EXPOSE 5000
 
 # Comando para rodar a aplicação
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]

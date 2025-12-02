@@ -363,15 +363,23 @@ export default function EssayDetail() {
                   {essayData?.authorName.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-<Link href={`/profile/${essayData?.authorId}`}>
-                 <Button 
-                   variant="ghost" 
-                   size="sm" 
-                   className="font-medium hover:text-primary p-0 h-auto"
-                 >
-                   {essayData?.authorName}
-                 </Button>
-              </Link>
+{isAuthor ? (
+  /* CASO SEJA O PRÓPRIO USUÁRIO: Apenas Texto (sem link) */
+  <span className="font-medium text-sm pl-2">
+    {essayData?.authorName}
+  </span>
+) : (
+  /* CASO SEJA OUTRA PESSOA: Link clicável */
+  <Link href={`/profile/${essayData?.authorId}`}>
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      className="font-medium hover:text-primary p-0 h-auto ml-2"
+    >
+      {essayData?.authorName}
+    </Button>
+  </Link>
+)}
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
