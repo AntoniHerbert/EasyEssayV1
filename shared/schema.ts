@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, jsonb, integer, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, jsonb, integer, pgEnum, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,6 +22,8 @@ export const essays = pgTable("essays", {
   isAnalyzed: boolean("is_analyzed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  reviewCount: integer("review_count").notNull().default(0),
+  averageScore: integer("average_score").notNull().default(0),
 }, (table) => {
   return {
     byAuthorPagination: index("essay_author_date_idx").on(table.authorId, table.createdAt),
@@ -187,6 +189,12 @@ export const peerReviews = pgTable('peer_reviews', {
   isSubmitted: boolean('is_submitted').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => {
+  return {
+    essayPagingIdx: index("review_essay_paging_idx").on(table.essayId, table.createdAt),
+    
+    uniqueReviewer: uniqueIndex("unique_essay_reviewer").on(table.essayId, table.reviewerId),
+  };
 });
 
 export const insertPeerReviewSchema = createInsertSchema(peerReviews).omit({

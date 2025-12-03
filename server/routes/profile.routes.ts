@@ -8,23 +8,6 @@ import { createProfileSchema, updateProfileSchema } from "@shared/schema";
 const router = Router();
 
 
-// =================================================================
-// 🔒 Rotas Protegidas (Exigem login)
-// =================================================================
-
-router.use(isAuthenticated);
-
-/**
- * Busca um perfil de usuário público.
- */
-router.get("/:userId", catchAsync(async (req, res) => {
-const profile = await profileService.getProfileByUserId(req.params.userId); 
-  if (!profile) {
-    return res.status(404).json({ message: "Profile not found" });
-  }
-  res.json(profile);
-}));
-
 /**
  * Cria um novo perfil de usuário.
  * (Mantendo a lógica original conforme solicitado)
@@ -43,6 +26,25 @@ router.post("/", validateBody(createProfileSchema), catchAsync(async (req, res) 
       throw error;
     }
 }));
+
+
+// =================================================================
+// 🔒 Rotas Protegidas (Exigem login)
+// =================================================================
+
+router.use(isAuthenticated);
+
+/**
+ * Busca um perfil de usuário público.
+ */
+router.get("/:userId", catchAsync(async (req, res) => {
+const profile = await profileService.getProfileByUserId(req.params.userId); 
+  if (!profile) {
+    return res.status(404).json({ message: "Profile not found" });
+  }
+  res.json(profile);
+}));
+
 
 /**
  * Atualiza o perfil do próprio usuário.

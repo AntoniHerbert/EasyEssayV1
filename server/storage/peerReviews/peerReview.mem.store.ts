@@ -10,6 +10,23 @@ export class PeerReviewMemStore implements IPeerReviewStore {
     this.peerReviews = new Map();
   }
 
+  async getEssayStats(essayId: string, _tx?: Tx): Promise<{ count: number; average: number }> {
+    const reviews = Array.from(this.peerReviews.values())
+      .filter(r => r.essayId === essayId);
+
+    const count = reviews.length;
+
+    if (count === 0) {
+      return { count: 0, average: 0 };
+    }
+
+    const totalScore = reviews.reduce((sum, review) => sum + review.overallScore, 0);
+
+    const average = Math.round(totalScore / count);
+
+    return { count, average };
+  }
+
   async getPeerReviews(essayId: string): Promise<PeerReview[]> {
     return Array.from(this.peerReviews.values()).filter(r => r.essayId === essayId);
   }

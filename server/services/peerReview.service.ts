@@ -17,11 +17,35 @@ export class PeerReviewService {
     private txManager: ITransactionManager
   ) {}
 
+  private async updateEssayStats(essayId: string, tx: Tx) {
+    const stats = await this.peerReviewStore.getEssayStats(essayId, tx);
+    
+    await this.essayStore.updateEssay(essayId, {
+      reviewCount: stats.count,
+      averageScore: stats.average
+    }, tx);
+  }
+
   /**
    * Busca todas as revisões de uma redação.
    */
-  async getReviewsByEssayId(essayId: string) {
-    return await this.peerReviewStore.getPeerReviews(essayId);
+  async getReviewsByEssayId(essayId: string, cursorStr?: string) {
+    const limit = 10;
+
+    let cursorDate: Date | undefined;
+    if (cursorStr) {
+      const parsed = new Date(cursorStr);
+      if (!isNaN(parsed.getTime())) cursorDate = parsed;
+    }
+
+    const reviews = await this.peerReviewStore.getPeerReviews(essayId, limit, cursorDate);
+
+    let nextCursor: string | null = null;
+    if (reviews.length === limit) {
+      nextCursor = reviews[reviews.length - 1].createdAt.toISOString();
+    }
+
+    return { data: reviews, nextCursor };
   }
 
   /**
@@ -44,13 +68,19 @@ export class PeerReviewService {
       return { review: existingReview, isNew: false };
     }
 
-    const reviewData = insertPeerReviewSchema.parse({
-      ...data,
-      reviewerId,
-      essayId
+    const newReview = await this.txManager.transaction(async (tx) => {
+      
+      const review = await this.peerReviewStore.createPeerReview({
+        ...data,
+        reviewerId,
+        essayId
+      }, tx); 
+
+      await this.updateEssayStats(essayId, tx); 
+
+      return review;
     });
     
-    const newReview = await this.peerReviewStore.createPeerReview(reviewData);
     return { review: newReview, isNew: true };
   }
 
@@ -68,7 +98,18 @@ export class PeerReviewService {
       throw new Error("FORBIDDEN_ACCESS");
     }
 
-    return await this.peerReviewStore.updatePeerReview(reviewId, data);
+    return await this.txManager.transaction(async (tx) => {
+
+    const updated = await this.peerReviewStore.updatePeerReview(reviewId, data, tx);
+
+        const review = await this.peerReviewStore.getPeerReviewById(reviewId); // Leitura rápida
+        if (review) {
+            await this.updateEssayStats(review.essayId, tx);
+        }
+        
+        return updated;
+    });
+  
   }
 
   /**

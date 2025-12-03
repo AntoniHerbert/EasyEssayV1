@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,10 +52,25 @@ export default function EssayDetail() {
     enabled: !!essayId,
   });
 
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<PeerReviewWithProfile[]>({
-    queryKey: [`/api/essays/${essayId}/peer-reviews`],
-    enabled: !!essayId,
-  });
+  const { 
+      data, 
+      fetchNextPage, 
+      hasNextPage, 
+      isFetchingNextPage,
+      isLoading: reviewsLoading 
+    } = useInfiniteQuery({
+      queryKey: [`/api/essays/${essayId}/peer-reviews`],
+      enabled: !!essayId,
+      initialPageParam: null as string | null,
+      queryFn: async ({ pageParam }) => {
+        const url = `/api/essays/${essayId}/peer-reviews${pageParam ? `?cursor=${pageParam}` : ''}`;
+        const res = await apiRequest("GET", url);
+        return await res.json();
+      },
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+
+  const reviews = data?.pages.flatMap((page) => page.data) || [];
 
   const getOrCreateReviewMutation = useMutation({
     mutationFn: async () => {
@@ -73,6 +88,7 @@ export default function EssayDetail() {
     onSuccess: (data: any) => {
       setActiveReviewId(data.id);
       queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}/peer-reviews`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
     },
     onError: (error: any) => {
       toast({
@@ -210,6 +226,7 @@ export default function EssayDetail() {
       });
       
       queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}/peer-reviews`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
       
       toast({
         title: "Review submitted",
@@ -327,21 +344,17 @@ export default function EssayDetail() {
   let scoreLabel = "No reviews yet";
 
   if (viewingReviewId) {
-    // CASO 1: Vendo uma review específica (clicada na lista)
     const review = reviews.find(r => r.id === viewingReviewId);
     displayScore = review ? review.overallScore : 0;
     scoreLabel = "Selected Review Score";
   
   } else if (isEditingReview) {
-    // CASO 2: Sou um revisor e estou editando agora (tempo real)
     displayScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
     scoreLabel = "Your Current Score";
 
   } else if (reviews.length > 0) {
-    // CASO 3: Padrão (Média de TODAS as reviews, incluindo IA)
-    const totalScore = reviews.reduce((acc, curr) => acc + curr.overallScore, 0);
-    displayScore = Math.round(totalScore / reviews.length);
-    scoreLabel = `Average Score (${reviews.length} reviews)`;
+    displayScore = essayData?.averageScore || 0;
+    scoreLabel = `Average Score (${essayData?.reviewCount || 0} reviews)`;
   }
   const overallScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
   const maxScore = 1200;
@@ -683,7 +696,7 @@ export default function EssayDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Community Reviews ({reviews.length})
+                  Community Reviews
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -737,11 +750,18 @@ export default function EssayDetail() {
                       </div>
                     );
                   })}
-                                <div className="text-center">
-                      <Button variant="secondary" size="lg" data-testid="button-load-more">
-                        Load More Reviews
+                  {hasNextPage && (
+                    <div className="text-center pt-4">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                      >
+                        {isFetchingNextPage ? "Loading..." : "Load older reviews"}
                       </Button>
                     </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -71,6 +71,9 @@ private async runAiAnalysis(essayId: string, title: string, content: string) {
       const warningComment = `⚠️ CONTEÚDO SINALIZADO: Esta redação foi identificada como ofensiva ou imprópria. Ela foi tornada privada automaticamente.\n\nMotivo: ${aiReview.offenseReason || "Violação de diretrizes."}`;
 
       await this.saveReviewInDatabase(essayId, aiReview, warningComment);
+
+      await this.updateEssayStats(essayId);
+
       return;
     }
 
@@ -78,7 +81,20 @@ private async runAiAnalysis(essayId: string, title: string, content: string) {
     await this.essayStore.updateEssay(essayId, { isAnalyzed: true, isPublic: true });
     
     await this.saveReviewInDatabase(essayId, aiReview, null);
+
+    const stats = await this.peerReviewStore.getEssayStats(essayId);
+
+    // 5. Atualiza a Redação com tudo pronto
+    await this.essayStore.updateEssay(essayId, { 
+      isAnalyzed: true,
+      isPublic: true,
+      reviewCount: stats.count,      
+      averageScore: stats.average  
+    });
   }
+
+
+  
 
   /**
    * Auxiliar: Decide se usa IA Real ou Mock e retorna os dados padronizados.
@@ -99,6 +115,8 @@ private async runAiAnalysis(essayId: string, title: string, content: string) {
     console.log(`[AiService] Using Mock AI...`);
     return this.getMockData(title, content);
   }
+
+
 
   /**
    * Auxiliar: Garante que o Mock tenha a estrutura nova (com campos de moderação)

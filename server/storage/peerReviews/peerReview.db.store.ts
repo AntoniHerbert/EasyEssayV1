@@ -1,6 +1,6 @@
 import { type DrizzleDb } from "../index";
 import * as schema from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count, avg, lt } from "drizzle-orm";
 import { type PeerReview, type InsertPeerReview, type CorrectionObject } from "@shared/schema";
 import { IPeerReviewStore } from "./peerReview.store";
 import { type Tx } from "../types"; 
@@ -13,17 +13,69 @@ export class PeerReviewDbStore implements IPeerReviewStore {
     this.db = db;
   }
 
-  async getPeerReviews(essayId: string): Promise<schema.PeerReviewWithProfile[]> {
+  async getEssayStats(essayId: string): Promise<{ count: number; average: number }> {
     const result = await this.db
       .select({
-        ...schema.peerReviews,
-        reviewerName: schema.userProfiles.displayName, 
+        count: count(),
+        average: avg(schema.peerReviews.overallScore)
       })
       .from(schema.peerReviews)
-      .leftJoin(schema.userProfiles, eq(schema.peerReviews.reviewerId, schema.userProfiles.userId))
-      .where(eq(schema.peerReviews.essayId, essayId))
+      .where(eq(schema.peerReviews.essayId, essayId));
+
+    const stats = result[0];
+    
+    return {
+      count: stats.count,
+      average: stats.average ? Math.round(Number(stats.average)) : 0
+    };
+  }
+
+  async getPeerReviews(
+    essayId: string, 
+    limit = 10, 
+    cursor?: Date
+  ): Promise<schema.PeerReviewWithProfile[]> {
+    let query = this.db
+      .select({
+        review: schema.peerReviews,
+        profileDisplayName: schema.userProfiles.displayName,
+      })
+      .from(schema.peerReviews)
+      .leftJoin(
+        schema.userProfiles,
+        eq(schema.peerReviews.reviewerId, schema.userProfiles.userId)
+      );
+
+      const conditions = [eq(schema.peerReviews.essayId, essayId)];
+
+    if (cursor) {
+      conditions.push(lt(schema.peerReviews.createdAt, cursor));
+    }
+
+    const rows = await query
+      .where(and(...conditions))
+      .limit(limit)
       .orderBy(desc(schema.peerReviews.createdAt));
-    return result;
+
+    return rows.map(({ review, profileDisplayName }) => {
+      let reviewerName = profileDisplayName;
+
+      // Tratamento especial para a IA ou usuários deletados
+      if (!reviewerName) {
+        if (review.reviewerId === 'AI') {
+          reviewerName = 'AI Assistant';
+        } else {
+          reviewerName = 'Anonymous';
+        }
+      }
+
+      return {
+        ...review,
+        reviewerName,
+      };
+    });
+
+    
   }
 
   async getPeerReview(essayId: string, reviewerId: string): Promise<schema.PeerReviewWithProfile | undefined> {

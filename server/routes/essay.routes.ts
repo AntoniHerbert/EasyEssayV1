@@ -59,8 +59,14 @@ const likes = await essayLikeService.getLikesCount(req.params.id);
 }));
 
 router.get("/:essayId/peer-reviews", catchAsync(async (req, res) => {
-const reviews = await peerReviewService.getReviewsByEssayId(req.params.essayId);
-res.json(reviews);
+  const { cursor } = req.query;
+
+  const result = await peerReviewService.getReviewsByEssayId(
+    req.params.essayId,
+    cursor as string
+  );
+  
+  res.json(result);
 }));
 
 router.post("/", 

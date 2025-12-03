@@ -2,11 +2,12 @@ import { type PeerReview, type InsertPeerReview, type CorrectionObject } from "@
 import { type Tx } from "../types"; 
 
 export interface IPeerReviewStore {
-  getPeerReviews(essayId: string): Promise<PeerReview[]>;
+  getPeerReviews(essayId: string, limit?: number, cursor?: Date): Promise<PeerReview[]>;
   getPeerReview(essayId: string, reviewerId: string): Promise<PeerReview | undefined>;
   getPeerReviewById(id: string): Promise<PeerReview | undefined>;
   createPeerReview(review: InsertPeerReview, tx?: Tx): Promise<PeerReview>;
   updatePeerReview(id: string, updates: Partial<InsertPeerReview>, tx?: Tx): Promise<PeerReview | undefined>;
   addCorrectionToReview(reviewId: string, correction: CorrectionObject, tx?: Tx): Promise<PeerReview | undefined>;
   deleteByEssayId(essayId: string, tx?: Tx): Promise<void>;
+  getEssayStats(essayId: string, tx?: Tx): Promise<{ count: number; average: number }>;
 }
