@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type UserProfile, type Friendship, type Essay } from "@shared/schema";
+
 import { 
   UserPlus, 
   MessageSquare, 
@@ -20,7 +21,8 @@ import {
   ArrowLeft,
   FileText,
   Lock,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -42,15 +44,31 @@ export default function UserProfilePage() {
     enabled: !!userId && userId !== user?.id,
   });
 
-  const { data: essays = [], isLoading: essaysLoading } = useQuery<Essay[]>({
+  const { 
+    data: essaysData, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage,
+    status: essaysStatus
+  } = useInfiniteQuery({
     queryKey: [`/api/essays`, userId],
-    queryFn: async () => {
-      const response = await fetch(`/api/essays?authorId=${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch essays');
-      return response.json();
+    enabled: !!userId,
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams();
+      params.append("authorId", userId);
+   
+      if (pageParam) params.append("cursor", pageParam);
+      
+      const res = await fetch(`/api/essays?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch essays');
+      return res.json();
     },
-    enabled: !!userId && userId !== user?.id,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+
+  const essays = essaysData?.pages.flatMap((page) => page.data) || [];
+  const essaysLoading = essaysStatus === 'pending';
 
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -311,6 +329,23 @@ export default function UserProfilePage() {
                   </Card>
                 </Link>
               ))}
+
+             {hasNextPage && (
+                <div className="text-center pt-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                  >
+                    {isFetchingNextPage ? (
+                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</>
+                    ) : (
+                       "Load More"
+                    )}
+                  </Button>
+                </div>
+              )}
+
             </div>
           )}
         </CardContent>
