@@ -1,6 +1,6 @@
 import { type DrizzleDb } from "../index";
 import * as schema from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, ne, ilike, or } from "drizzle-orm";
 import { type Essay, type InsertEssay } from "@shared/schema";
 import { IEssayStore } from "./essay.store";
 import { type Tx } from "../types"; 
@@ -35,7 +35,14 @@ export class EssayDbStore implements IEssayStore {
     };
   }
 
-  async getEssays(isPublic?: boolean, authorId?: string): Promise<Essay[]> {
+  async getEssays(
+    isPublic?: boolean, 
+    authorId?: string,
+    limit = 20,
+    cursor?: Date,
+    excludeAuthorId?: string,
+    searchQuery?: string
+  ): Promise<Essay[]> {
     let query = this.db
     .select({
       essay: schema.essays,
@@ -53,12 +60,31 @@ export class EssayDbStore implements IEssayStore {
     if (authorId) {
       conditions.push(eq(schema.essays.authorId, authorId));
     }
-    
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+    if (cursor) {
+      conditions.push(lt(schema.essays.createdAt, cursor));
     }
 
-    const rows = await query.orderBy(desc(schema.essays.updatedAt));
+    if (excludeAuthorId) {
+      conditions.push(ne(schema.essays.authorId, excludeAuthorId));
+    }
+
+    if (searchQuery) {
+      const searchPattern = `%${searchQuery}%`; 
+      conditions.push(
+        or(
+          ilike(schema.essays.title, searchPattern),
+          ilike(schema.essays.content, searchPattern)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const rows = await query
+    .limit(limit)
+    .orderBy(desc(schema.essays.createdAt));
     
     return rows.map(({ essay, profileDisplayName }) => ({
       ...essay,

@@ -77,6 +77,20 @@ export class FriendshipService {
       throw new Error("FORBIDDEN_UPDATE");
     }
 
-    return await this.friendshipStore.updateFriendship(friendshipId, data);
+    const updated = await this.friendshipStore.updateFriendship(friendshipId, data);
+
+    if (data.status === "accepted") {
+      const accepterProfile = await this.profileStore.getUserProfile(userId);
+      const accepterName = accepterProfile?.displayName || "Someone";
+
+      console.log(`[FriendshipService] Notificando ${friendship.requesterId} que ${userId} aceitou.`);
+      
+      this.notificationService.notifyFriendRequestAccepted(
+        friendship.requesterId, 
+        accepterName
+      );
+    }
+
+    return updated;
   }
 }

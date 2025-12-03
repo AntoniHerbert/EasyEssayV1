@@ -62,8 +62,16 @@ const PgSession = connectPgSimple(session);
 const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   max: 20,
-  idleTimeoutMillis: 40000,
-  connectionTimeoutMillis:2000,
+  
+  idleTimeoutMillis: 30000, 
+  
+  connectionTimeoutMillis: 10000, 
+
+  keepAlive: true, 
+});
+
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
 });
 
 app.use(

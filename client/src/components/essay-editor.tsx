@@ -62,7 +62,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
     },
     onSuccess: async (response) => {
       const savedEssay = await response.json();
-      queryClient.invalidateQueries({ queryKey: [`/api/essays?authorId=${user?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/essays"] });
       onEssayChange?.(savedEssay);
       toast({
         title: "Essay saved",
@@ -85,7 +85,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
     onSuccess: async (response, variables) => {
       const aiReview = await response.json();
       queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}/peer-reviews`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/essays"] });
       queryClient.invalidateQueries({ queryKey: [`/api/essays?authorId=${user?.id}`] });
       
       toast({

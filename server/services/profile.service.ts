@@ -60,8 +60,32 @@ export class ProfileService {
     return updatedProfile;
   }
 
-  async getAllProfiles() {
-    // TODO: Implementar paginação real (limit/offset) no futuro
-    return await this.profileStore.getAllUsers();
+  async getAllProfiles(cursorStr?: string, searchQuery?: string) {
+
+    const limit = 20;
+
+    let cursor: { totalEssays: number, id: string } | undefined;
+    if (cursorStr) {
+      try {
+          cursor = JSON.parse(atob(cursorStr));
+      } catch (e) {
+          console.warn("Invalid cursor format", e);
+      }
+    }
+
+    const safeSearch = searchQuery?.trim().slice(0, 50);
+
+    const profiles = await this.profileStore.getAllUsers(limit, cursor, safeSearch);
+
+    let nextCursor: string | null = null;
+    if (profiles.length === limit) {
+      const lastProfile = profiles[profiles.length - 1];
+      const cursorObj = { 
+        totalEssays: lastProfile.totalEssays, 
+        id: lastProfile.id 
+      };
+      nextCursor = btoa(JSON.stringify(cursorObj));
+    }
+    return { data: profiles, nextCursor };
   }
 }

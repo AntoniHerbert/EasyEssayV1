@@ -737,10 +737,19 @@ export default function EssayDetail() {
                       </div>
                     );
                   })}
+                                <div className="text-center">
+                      <Button variant="secondary" size="lg" data-testid="button-load-more">
+                        Load More Reviews
+                      </Button>
+                    </div>
                 </div>
               </CardContent>
             </Card>
+            
+            
           )}
+
+                   
         </div>
       </div>
     </div>

@@ -18,6 +18,15 @@ export class SocketNotificationService implements INotificationService {
     this.io.to(targetUserId).emit("new_message", message);
   }
 
+  notifyFriendRequestAccepted(targetUserId: string, accepterName: string): void {
+    if (!this.io) return;
+    
+    this.io.to(targetUserId).emit("friend_request_accepted", {
+      message: `${accepterName} accepted your friend request!`,
+      accepterName
+    });
+  }
+
   notifyFriendRequest(targetUserId: string, requesterName: string): void {
   if (this.io) {
     this.io.to(targetUserId).emit("friend_request", { 

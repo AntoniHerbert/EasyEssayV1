@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, jsonb, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, jsonb, integer, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,6 +22,13 @@ export const essays = pgTable("essays", {
   isAnalyzed: boolean("is_analyzed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    byAuthorPagination: index("essay_author_date_idx").on(table.authorId, table.createdAt),
+
+    byPublicPagination: index("essay_public_date_idx").on(table.isPublic, table.createdAt),
+    
+  };
 });
 
 export const essayLikes = pgTable("essay_likes", {
@@ -62,6 +69,11 @@ export const userProfiles = pgTable("user_profiles", {
   experience: integer("experience").notNull().default(0),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
   lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    displayNameIdx: index("profile_display_name_idx").on(table.displayName),
+    
+    rankingIdx: index("profile_ranking_idx").on(table.totalEssays, table.id),  };
 });
 
 export const friendships = pgTable("friendships", {
@@ -88,12 +100,6 @@ export const insertEssaySchema = createInsertSchema(essays).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
-
-export const insertUserCorrectionSchema = createInsertSchema(userCorrections).omit({
-  id: true,
-  createdAt: true,
-  likes: true,
 });
 
 export const insertEssayLikeSchema = createInsertSchema(essayLikes).omit({
@@ -133,8 +139,6 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Essay = typeof essays.$inferSelect;
 export type InsertEssay = z.infer<typeof insertEssaySchema>;
-export type UserCorrection = typeof userCorrections.$inferSelect;
-export type InsertUserCorrection = z.infer<typeof insertUserCorrectionSchema>;
 export type EssayLike = typeof essayLikes.$inferSelect;
 export type InsertEssayLike = z.infer<typeof insertEssayLikeSchema>;
 export type Inspiration = typeof inspirations.$inferSelect;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ import { ConversationThread } from "@/components/conversation-thread";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { io, Socket } from "socket.io-client";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function UserProfile() {
   const { user, logout } = useAuth();
@@ -50,6 +51,7 @@ export function UserProfile() {
   const socketRef = useRef<Socket | null>(null); 
 
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const openConversationWith = localStorage.getItem('openConversationWith');
@@ -71,9 +73,29 @@ export function UserProfile() {
     queryKey: [`/api/friendships/${user?.id}`],
   });
 
-  const { data: allUsers = [], isLoading: usersLoading } = useQuery({
-    queryKey: ["/api/users"],
-  });
+  const {
+      data: usersData,
+      fetchNextPage: fetchNextUsers,
+      hasNextPage: hasMoreUsers,
+      isFetchingNextPage: isFetchingMoreUsers,
+      status: usersStatus,
+    } = useInfiniteQuery({
+      queryKey: ["/api/users", debouncedSearch], 
+      initialPageParam: null as string | null,
+      queryFn: async ({ pageParam }) => {
+        const params = new URLSearchParams();
+        if (pageParam) params.append("cursor", pageParam);
+        if (debouncedSearch) params.append("q", debouncedSearch);
+
+        const res = await apiRequest("GET", `/api/users?${params.toString()}`);
+        return await res.json();
+      },
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+
+  const allUsers = usersData?.pages.flatMap((page) => page.data) || [];
+
+  const usersLoading = usersStatus === 'pending';
 
   useEffect(() => {
     if (!user?.id) return;
@@ -99,6 +121,31 @@ export function UserProfile() {
         return [...oldMessages, newMessage];
       });
 
+    });
+
+    socket.on("friend_request", (data: { message: string }) => {
+      console.log("Pedido de amizade recebido:", data);
+
+      toast({
+        title: "New Connection",
+        description: data.message || "You received a new friend request!",
+        variant: "default",
+      });
+
+      queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user.id}`] });
+
+    });
+
+    socket.on("friend_request_accepted", (data) => {
+      console.log("Pedido aceito:", data);
+
+      toast({
+        title: "Friend Request Accepted",
+        description: data.message,
+        variant: "default",
+      });
+
+      queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user.id}`] });
     });
 
 
@@ -153,7 +200,7 @@ export function UserProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user?.id}`] });
       toast({
-        title: "Friend request accepted",
+        title: "You accepted the friendship",
         description: "You are now friends!",
       });
     },
@@ -589,12 +636,8 @@ export function UserProfile() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {(allUsers as UserProfile[])
-                    .filter(profileUser => 
-                      profileUser.userId !== user?.id &&
-                      (profileUser.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       profileUser.username.toLowerCase().includes(searchQuery.toLowerCase()))
-                    )
+                  {(allUsers)
+                    .filter(profileUser => profileUser.userId !== user?.id)
                     .map((profileUser: UserProfile) => {
                       const existingFriendship = (friendships as Friendship[]).find(f => 
                         (f.requesterId === profileUser.userId && f.addresseeId === user?.id) ||
@@ -646,17 +689,30 @@ export function UserProfile() {
                         </div>
                       );
                     })}
-                  {(allUsers as UserProfile[]).filter(profileUser => 
-                    profileUser.userId !== user?.id &&
-                    (profileUser.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                     profileUser.username.toLowerCase().includes(searchQuery.toLowerCase()))
-                  ).length === 0 && (
+                  {allUsers.length === 0 && (
                     <div className="text-center py-8">
                       <UserPlus className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                       <p className="text-muted-foreground">
                         {searchQuery ? "No users found matching your search" : "No users to discover yet"}
                       </p>
                     </div>
+                  )}
+                  {hasMoreUsers && (
+                    <div className="text-center pt-4">
+                      <Button 
+                        variant="secondary" 
+                        size="lg" 
+                        onClick={() => fetchNextUsers()}
+                        disabled={isFetchingMoreUsers}
+                        data-testid="button-load-more-users"
+                      >
+                        {isFetchingMoreUsers ? "Loading..." : "Load More Profiles"}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!hasMoreUsers && allUsers.length > 0 && (
+                     <p className="text-center text-muted-foreground text-sm mt-4">End of list</p>
                   )}
                 </div>
               )}

@@ -16,8 +16,14 @@ router.use(isAuthenticated);
  */
 router.get("/", catchAsync(async (req, res) => {
 
-const users = await profileService.getAllProfiles();
-  res.json(users);
+  const { cursor, q } = req.query;
+
+  const result = await profileService.getAllProfiles(
+    cursor as string,
+    q as string
+  );
+  
+  res.json(result);
 }));
 
 export default router;

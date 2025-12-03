@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type Essay } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Edit, Share, MoreVertical, Check, Clock, Globe, FileText, Eye, Trash2 } from "lucide-react";
+import { Search, Plus, Edit, Share, MoreVertical, Check, Clock, Globe, FileText, Eye, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface EssayLibraryProps {
   onEditEssay?: (essayId: string) => void;
@@ -18,28 +19,49 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const debouncedSearch = useDebounce(searchQuery, 500);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: essays = [], isLoading } = useQuery({
-    queryKey: [`/api/essays?authorId=${user?.id}`],
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: [`/api/essays`, `library`, `author:${user?.id}`, debouncedSearch], 
     enabled: !!user?.id,
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams();
+      if (user?.id) params.append("authorId", user.id);
+      if (pageParam) params.append("cursor", pageParam);
+
+      if (debouncedSearch) {
+        params.append("q", debouncedSearch);
+      }
+      
+      const res = await apiRequest("GET", `/api/essays?${params.toString()}`);
+      return await res.json();
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
-  const filteredEssays = (essays as Essay[]).filter((essay: Essay) => {
-    const matchesSearch = essay.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         essay.content.toLowerCase().includes(searchQuery.toLowerCase());
+  const allEssays = data?.pages.flatMap((page) => page.data) || [];
+
+  const filteredEssays = (allEssays as Essay[]).filter((essay: Essay) => {
     
     switch (activeFilter) {
       case "drafts":
-        return matchesSearch && !essay.isAnalyzed && !essay.isPublic;
+        return !essay.isAnalyzed && !essay.isPublic;
       case "published":
-        return matchesSearch && essay.isPublic;
+        return essay.isPublic;
       case "analyzed":
-        return matchesSearch && essay.isAnalyzed;
+        return essay.isAnalyzed;
       default:
-        return matchesSearch;
+        return true;
     }
   });
 
@@ -111,22 +133,6 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-muted rounded w-full mb-4"></div>
-              <div className="h-3 bg-muted rounded w-1/2"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Header */}
@@ -176,7 +182,20 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       </div>
 
       {/* Essays Grid */}
-      {filteredEssays.length === 0 ? (
+      {status === 'pending' ? (
+        // Mostra os Skeletons AQUI
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-full mb-4"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredEssays.length === 0 && !searchQuery && activeFilter === 'all' ? (
         <Card>
           <CardContent className="p-12 text-center">
             <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -268,6 +287,26 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
               </CardContent>
             </Card>
           ))}
+
+          {hasNextPage && (
+             <div className="text-center col-span-full justify-self-center py-4">
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load More Essays"
+                  )}
+                </Button>
+             </div>
+          )}  
         </div>
       )}
     </div>

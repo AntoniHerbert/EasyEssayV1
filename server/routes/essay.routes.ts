@@ -21,11 +21,14 @@ const router = Router();
 router.use(isAuthenticated);
 
 router.get("/", catchAsync(async (req, res) => {
-  const { isPublic, authorId } = req.query;
+  const { isPublic, authorId, cursor, excludeAuthorId, q } = req.query;
   const essays = await essayService.getEssays(
     req.session.userId, 
     isPublic as string, 
-    authorId as string
+    authorId as string,
+    cursor as string,
+    excludeAuthorId as string,
+    q as string
   );
   res.json(essays);
 }));

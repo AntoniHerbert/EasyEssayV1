@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { type Essay } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, MessageCircle, Bookmark, Users, Clock, BookOpen, UserPlus, User } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Users, Clock, BookOpen, UserPlus, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 
 export function CommunityFeed() {
@@ -17,12 +17,40 @@ export function CommunityFeed() {
   const [sortBy, setSortBy] = useState("recent");
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: ["/api/essays", "public", selectedTopic], 
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams();
+      params.append("isPublic", "true");
+      if (pageParam) params.append("cursor", pageParam);
+      
+      if (user?.id) {
+        params.append("excludeAuthorId", user.id);
+      }
 
-  const { data: essays = [], isLoading } = useQuery({
-    queryKey: ["/api/essays?isPublic=true"],
+      if (selectedTopic !== "all") {
+        params.append("q", selectedTopic);
+      }
+
+      const res = await apiRequest("GET", `/api/essays?${params.toString()}`);
+      return await res.json();
+    },
+    getNextPageParam: (lastPage) => {
+      return lastPage.nextCursor; 
+    },
   });
+
+  const allEssays = data?.pages.flatMap((page) => page.data) || [];
+
+  const { toast } = useToast();
+
 
   const toggleLikeMutation = useMutation({
     mutationFn: async (essayId: string) => {
@@ -91,7 +119,7 @@ export function CommunityFeed() {
     return Math.floor(Math.random() * 10) + 90;
   };
 
-  if (isLoading) {
+  if (status === 'pending') {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
@@ -134,7 +162,7 @@ export function CommunityFeed() {
               <SelectItem value="environment">Environment</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          {/*<Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[150px]" data-testid="select-sort">
               <SelectValue placeholder="Most Recent" />
             </SelectTrigger>
@@ -143,12 +171,12 @@ export function CommunityFeed() {
               <SelectItem value="popular">Most Popular</SelectItem>
               <SelectItem value="rated">Highest Rated</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>*/}
         </div>
       </div>
 
       {/* Essays Feed */}
-      {(essays as Essay[]).length === 0 ? (
+      {allEssays.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -160,8 +188,7 @@ export function CommunityFeed() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {(essays as Essay[])
-            .filter(essay => essay.authorId !== user?.id)
+          {allEssays
             .map((essay: Essay) => {
             const topic = getTopicBadge(essay.title, essay.content);
             const readingTime = getReadingTime(essay.wordCount);
@@ -266,13 +293,35 @@ export function CommunityFeed() {
           })}
           
           {/* Load More Button */}
-         {/*} <div className="text-center">
-            <Button variant="secondary" size="lg" data-testid="button-load-more">
-              Load More Essays
-            </Button>
-          </div>*/}
+{hasNextPage && (
+            <div className="text-center py-4">
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                data-testid="button-load-more"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Essays"
+                )}
+              </Button>
+            </div>
+          )}
+          
+          {!hasNextPage && allEssays.length > 0 && (
+             <p className="text-center text-muted-foreground text-sm mt-4">
+               You've reached the end of the list.
+             </p>
+          )}
         </div>
       )}
-    </div>
+
+      </div>
   );
 }

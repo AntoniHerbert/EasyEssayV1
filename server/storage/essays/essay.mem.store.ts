@@ -14,7 +14,7 @@ export class EssayMemStore implements IEssayStore {
     return this.essays.get(id);
   }
 
-  async getEssays(isPublic?: boolean, authorId?: string): Promise<Essay[]> {
+  async getEssays(isPublic?: boolean, authorId?: string, limit = 20, cursor?: Date, searchQuery?: string): Promise<Essay[]> {
     const allEssays = Array.from(this.essays.values());
     return allEssays.filter(essay => {
       if (isPublic !== undefined && essay.isPublic !== isPublic) return false;
