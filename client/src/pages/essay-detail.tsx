@@ -362,53 +362,67 @@ export default function EssayDetail() {
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold">{essayData?.title}</h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
+  {/* HEADER INTELIGENTE (GRID REORDER) */}
+  <div className="grid grid-cols-[auto_1fr] md:flex md:items-start gap-x-4 gap-y-2 mb-6">
     
-              <Avatar className="w-6 h-6">
-                <AvatarFallback>
-                  {essayData?.authorName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-{isAuthor ? (
-  /* CASO SEJA O PRÓPRIO USUÁRIO: Apenas Texto (sem link) */
-  <span className="font-medium text-sm pl-2">
-    {essayData?.authorName}
-  </span>
-) : (
-  /* CASO SEJA OUTRA PESSOA: Link clicável */
-  <Link href={`/profile/${essayData?.authorId}`}>
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      className="font-medium hover:text-primary p-0 h-auto ml-2"
-    >
-      {essayData?.authorName}
+    {/* 1. SETA DE VOLTAR 
+        Mobile: Fica na Célula 1 (Canto superior esquerdo)
+        Desktop: Fica no início do Flex
+    */}
+    <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="shrink-0">
+      <ArrowLeft className="w-4 h-4" />
     </Button>
-  </Link>
-)}
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{essayData ? new Date(essayData.createdAt).toLocaleDateString() : ''}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span>{essayData?.wordCount} words</span>
-            </div>
-          </div>
+
+    {/* 2. CONTEÚDO (TÍTULO + METADADOS) 
+        Mobile: 'col-span-2' (ocupa a largura toda) e 'row-start-2' (vai para a linha de baixo)
+        Desktop: 'md:col-auto' (volta ao normal) e 'md:flex-1' (ocupa o espaço do meio)
+    */}
+    <div className="col-span-2 row-start-2 md:col-auto md:row-auto md:flex-1 min-w-0">
+      <h1 className="text-2xl md:text-3xl font-bold break-words">{essayData?.title}</h1>
+      
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
+        {/* Autor */}
+        <div className="flex items-center gap-2">
+          <Avatar className="w-6 h-6">
+            <AvatarFallback>
+              {essayData?.authorName.split(' ').map(n => n[0]).join('').toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          {isAuthor ? (
+            <span className="font-medium text-sm pl-2">{essayData?.authorName}</span>
+          ) : (
+            <Link href={`/profile/${essayData?.authorId}`}>
+              <Button variant="ghost" size="sm" className="font-medium hover:text-primary p-0 h-auto ml-2">
+                {essayData?.authorName}
+              </Button>
+            </Link>
+          )}
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-primary">{displayScore}/{maxScore}</div>
-          <div className="text-sm text-muted-foreground">{scoreLabel}</div>
+
+        {/* Data */}
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          <Calendar className="w-4 h-4" />
+          <span>{essayData ? new Date(essayData.createdAt).toLocaleDateString() : ''}</span>
+        </div>
+
+        {/* Palavras */}
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          <Eye className="w-4 h-4" />
+          <span>{essayData?.wordCount} words</span>
         </div>
       </div>
+    </div>
+
+    {/* 3. NOTA (SCORE)
+        Mobile: 'col-start-2' (vai para a direita da seta) e 'row-start-1' (força subir para a linha da seta)
+        Desktop: 'md:ml-auto' (empurra para a direita no flex)
+    */}
+    <div className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-auto md:ml-auto text-right pl-2">
+      <div className="text-2xl font-bold text-primary">{displayScore}/{maxScore}</div>
+      <div className="text-sm text-muted-foreground">{scoreLabel}</div>
+    </div>
+
+  </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Essay Content */}
