@@ -10,8 +10,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { type Essay } from "@shared/schema";
 import { FileText, Folder, Users, User, Lightbulb } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState("write");
   const [currentEssay, setCurrentEssay] = useState<Essay | null>(null);
   const [editingEssayId, setEditingEssayId] = useState<string>("");
@@ -26,10 +28,11 @@ export default function Home() {
   }, []);
 
   const navItems = [
-    { id: "write", label: "Write", icon: FileText },
-    { id: "library", label: "Library", icon: Folder },
-    { id: "inspirations", label: "Inspirations", icon: Lightbulb },
-    { id: "community", label: "Community", icon: Users },
+    { id: "write", label: t('nav.write'), icon: FileText },
+    { id: "library", label: t('nav.library'), icon: Folder },
+    { id: "inspirations", label: t('nav.inspirations'), icon: Lightbulb },
+    { id: "community", label: t('nav.community'), icon: Users },
+    { id: "profile", label: t('nav.profile'), icon: User },
   ];
 
   const handleEditEssay = (essayId: string) => {
@@ -99,19 +102,6 @@ export default function Home() {
                   </Button>
                 );
               })}
-              <Button 
-                variant="ghost"
-                className={`${
-                  activeSection === "profile"
-                    ? "text-primary border-b-2 border-primary rounded-none pb-1" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={() => setActiveSection("profile")}
-                data-testid="nav-desktop-profile"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
             </div>
           </div>
         </div>

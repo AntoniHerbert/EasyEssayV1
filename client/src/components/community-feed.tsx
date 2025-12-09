@@ -10,9 +10,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, MessageCircle, Bookmark, Users, Clock, BookOpen, UserPlus, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 
 export function CommunityFeed() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
@@ -61,8 +63,8 @@ export function CommunityFeed() {
     },
     onError: () => {
       toast({
-        title: "Action failed",
-        description: "Failed to update like. Please try again.",
+        title: t('community.toast.like_failed_title'),
+        description: t('community.toast.like_failed_desc'),
         variant: "destructive",
       });
     },
@@ -77,14 +79,14 @@ export function CommunityFeed() {
     },
     onSuccess: () => {
       toast({
-        title: "Friend request sent",
-        description: "Your friend request has been sent successfully!",
+        title: t('community.toast.request_sent_title'),
+        description: t('community.toast.request_sent_desc'),
       });
     },
     onError: () => {
       toast({
-        title: "Request failed",
-        description: "Failed to send friend request. Please try again.",
+        title: t('community.toast.request_failed_title'),
+        description: t('community.toast.request_failed_desc'),
         variant: "destructive",
       });
     },
@@ -98,15 +100,15 @@ export function CommunityFeed() {
     const text = (title + " " + content).toLowerCase();
     
     if (text.includes("technology") || text.includes("AI") || text.includes("computer") || text.includes("digital")) {
-      return { label: "Technology", color: "bg-primary/10 text-primary" };
+      return { key: "technology", color: "bg-primary/10 text-primary" };
     } else if (text.includes("environment") || text.includes("climate") || text.includes("sustainability")) {
-      return { label: "Environment", color: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" };
+      return { key: "environment", color: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" };
     } else if (text.includes("literature") || text.includes("story") || text.includes("narrative")) {
-      return { label: "Literature", color: "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100" };
+      return { key: "literature", color: "bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100" };
     } else if (text.includes("science") || text.includes("research") || text.includes("study")) {
-      return { label: "Science", color: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100" };
+      return { key: "science", color: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100" };
     } else {
-      return { label: "General", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100" };
+      return { key: "general", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100" };
     }
   };
 
@@ -146,20 +148,20 @@ export function CommunityFeed() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Community Essays</h2>
-          <p className="text-muted-foreground">Discover and learn from essays shared by other writers</p>
+          <h2 className="text-2xl font-bold mb-2">{t('community.header.title')}</h2>
+          <p className="text-muted-foreground">{t('community.header.subtitle')}</p>
         </div>
         <div className="mt-4 sm:mt-0 flex items-center space-x-3">
           <Select value={selectedTopic} onValueChange={setSelectedTopic}>
             <SelectTrigger className="w-[150px]" data-testid="select-topic">
-              <SelectValue placeholder="All Topics" />
+              <SelectValue placeholder={t('community.filters.all_topics')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Topics</SelectItem>
-              <SelectItem value="technology">Technology</SelectItem>
-              <SelectItem value="science">Science</SelectItem>
-              <SelectItem value="literature">Literature</SelectItem>
-              <SelectItem value="environment">Environment</SelectItem>
+              <SelectItem value="all">{t('community.filters.all_topics')}</SelectItem>
+              <SelectItem value="technology">{t('community.filters.technology')}</SelectItem>
+              <SelectItem value="science">{t('community.filters.science')}</SelectItem>
+              <SelectItem value="literature">{t('community.filters.literature')}</SelectItem>
+              <SelectItem value="environment">{t('community.filters.environment')}</SelectItem>
             </SelectContent>
           </Select>
           {/*<Select value={sortBy} onValueChange={setSortBy}>
@@ -180,9 +182,9 @@ export function CommunityFeed() {
         <Card>
           <CardContent className="p-12 text-center">
             <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No community essays yet</h3>
+            <h3 className="text-lg font-medium mb-2">{t('community.empty.title')}</h3>
             <p className="text-muted-foreground">
-              Be the first to share your essay with the community!
+              {t('community.empty.desc')}
             </p>
           </CardContent>
         </Card>
@@ -218,10 +220,10 @@ export function CommunityFeed() {
                           </Button>
                         </Link>
                         <span className="text-muted-foreground text-sm">
-                          {new Date(essay.updatedAt).toLocaleDateString()}
+                          {new Date(essay.updatedAt).toLocaleDateString(i18n.language)}
                         </span>
                         <span className={`px-2 py-1 text-xs rounded-full ${topic.color}`}>
-                          {topic.label}
+                          {t(`community.topics.${topic.key}`)}
                         </span>
                       </div>
                       
@@ -239,11 +241,11 @@ export function CommunityFeed() {
                         <div className="flex space-x-4 text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
-                            <span>{readingTime} min read</span>
+                            <span>{readingTime} {t('community.card.min_read')}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <BookOpen className="w-4 h-4" />
-                            <span>{essay.wordCount} words</span>
+                            <span>{essay.wordCount} {t('community.card.words')}</span>
                           </div>{/* 
                           <div className="flex items-center space-x-2">
                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -305,10 +307,10 @@ export function CommunityFeed() {
                 {isFetchingNextPage ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading...
+                    {t('common.loading')}
                   </>
                 ) : (
-                  "Load More Essays"
+                  t('community.load_more')
                 )}
               </Button>
             </div>
@@ -316,7 +318,7 @@ export function CommunityFeed() {
           
           {!hasNextPage && allEssays.length > 0 && (
              <p className="text-center text-muted-foreground text-sm mt-4">
-               You've reached the end of the list.
+               {t('community.end_of_list')}
              </p>
           )}
         </div>

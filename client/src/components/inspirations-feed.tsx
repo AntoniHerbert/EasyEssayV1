@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { type Inspiration } from "@shared/schema";
 import { Search, BookOpen, Clock, User, Tag, Filter } from "lucide-react";
+import { useTranslation } from "react-i18next"; 
 
 export function InspirationsFeed() {
+  const { t } = useTranslation(); 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
@@ -91,8 +93,8 @@ export function InspirationsFeed() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Inspirations</h2>
-          <p className="text-muted-foreground">Discover wisdom from great thinkers and writers</p>
+          <h2 className="text-2xl font-bold mb-2">{t('inspirations.header.title')}</h2>
+          <p className="text-muted-foreground">{t('inspirations.header.subtitle')}</p>
         </div>
       </div>
 
@@ -102,7 +104,7 @@ export function InspirationsFeed() {
           <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search inspirations, authors, or topics..."
+            placeholder={t('inspirations.filters.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-4 py-2"
@@ -113,41 +115,41 @@ export function InspirationsFeed() {
         <div className="flex gap-2 flex-wrap sm:flex-nowrap">
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[140px]" data-testid="select-category">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t('inspirations.filters.category')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="literature">Literature</SelectItem>
-              <SelectItem value="science">Science</SelectItem>
-              <SelectItem value="philosophy">Philosophy</SelectItem>
-              <SelectItem value="technology">Technology</SelectItem>
-              <SelectItem value="environment">Environment</SelectItem>
-              <SelectItem value="history">History</SelectItem>
+              <SelectItem value="all">{t('inspirations.filters.all_categories')}</SelectItem>
+              <SelectItem value="literature">{t('inspirations.categories.literature')}</SelectItem>
+              <SelectItem value="science">{t('inspirations.categories.science')}</SelectItem>
+              <SelectItem value="philosophy">{t('inspirations.categories.philosophy')}</SelectItem>
+              <SelectItem value="technology">{t('inspirations.categories.technology')}</SelectItem>
+              <SelectItem value="environment">{t('inspirations.categories.environment')}</SelectItem>
+              <SelectItem value="history">{t('inspirations.categories.history')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={selectedType} onValueChange={setSelectedType}>
             <SelectTrigger className="w-[120px]" data-testid="select-type">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder={t('inspirations.filters.type')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="book">Book</SelectItem>
-              <SelectItem value="article">Article</SelectItem>
-              <SelectItem value="quote">Quote</SelectItem>
-              <SelectItem value="excerpt">Excerpt</SelectItem>
+              <SelectItem value="all">{t('inspirations.filters.all_types')}</SelectItem>
+              <SelectItem value="book">{t('inspirations.types.book')}</SelectItem>
+              <SelectItem value="article">{t('inspirations.types.article')}</SelectItem>
+              <SelectItem value="quote">{t('inspirations.types.quote')}</SelectItem>
+              <SelectItem value="excerpt">{t('inspirations.types.excerpt')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
             <SelectTrigger className="w-[130px]" data-testid="select-difficulty">
-              <SelectValue placeholder="Difficulty" />
+              <SelectValue placeholder={t('inspirations.filters.difficulty')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              <SelectItem value="beginner">Beginner</SelectItem>
-              <SelectItem value="intermediate">Intermediate</SelectItem>
-              <SelectItem value="advanced">Advanced</SelectItem>
+              <SelectItem value="all">{t('inspirations.filters.all_levels')}</SelectItem>
+              <SelectItem value="beginner">{t('inspirations.difficulties.beginner')}</SelectItem>
+              <SelectItem value="intermediate">{t('inspirations.difficulties.intermediate')}</SelectItem>
+              <SelectItem value="advanced">{t('inspirations.difficulties.advanced')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -156,7 +158,7 @@ export function InspirationsFeed() {
       {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredInspirations.length} of {inspirations.length} inspirations
+          {t('inspirations.filters.showing', { count: filteredInspirations.length, total: inspirations.length })}
         </p>
         <Button variant="outline" size="sm" data-testid="button-clear-filters" 
           onClick={() => {
@@ -166,7 +168,7 @@ export function InspirationsFeed() {
             setSelectedDifficulty("all");
           }}>
           <Filter className="w-4 h-4 mr-2" />
-          Clear Filters
+          {t('inspirations.filters.clear')}
         </Button>
       </div>
 
@@ -175,11 +177,11 @@ export function InspirationsFeed() {
         <Card>
           <CardContent className="p-12 text-center">
             <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No inspirations found</h3>
+            <h3 className="text-lg font-medium mb-2">{t('inspirations.empty.title')}</h3>
             <p className="text-muted-foreground mb-4">
               {searchQuery || selectedCategory !== "all" || selectedType !== "all" || selectedDifficulty !== "all"
-                ? "Try adjusting your search or filters."
-                : "Check back later for new inspirational content."}
+                ? t('inspirations.empty.desc_search')
+                : t('inspirations.empty.desc_default')}
             </p>
           </CardContent>
         </Card>
@@ -188,35 +190,34 @@ export function InspirationsFeed() {
           {filteredInspirations.map((inspiration) => (
             <Card key={inspiration.id} className="hover:shadow-md transition-shadow" data-testid={`inspiration-card-${inspiration.id}`}>
               <CardContent className="p-6">
-<div className="flex flex-col gap-4 mb-4"> {/* Mudei a estrutura base para flex-col */}
+<div className="flex flex-col gap-4 mb-4"> 
     
-    {/* 1. Título e Categoria Badge */}
+    
     <div className="flex justify-between items-start gap-4">
       <h3 className="text-xl font-semibold break-words pr-2">
         {inspiration.title}
       </h3>
-      <Badge className={`${getCategoryColor(inspiration.category)} shrink-0`}> {/* shrink-0 impede o badge de ser esmagado */}
-        {inspiration.category}
+      <Badge className={`${getCategoryColor(inspiration.category)} shrink-0`}> 
+        {t(`inspirations.categories.${inspiration.category}`)}
       </Badge>
     </div>
     
-    {/* 2. Metadados com flex-wrap (A correção principal) */}
     <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-muted-foreground">
       <div className="flex items-center gap-1 min-w-fit">
-        <User className="w-4 h-4 shrink-0" /> {/* shrink-0 protege o ícone */}
+        <User className="w-4 h-4 shrink-0" /> 
         <span className="truncate max-w-[150px]">{inspiration.author}</span>
       </div>
       
       <div className="flex items-center gap-1 min-w-fit">
         <Clock className="w-4 h-4 shrink-0" />
-        <span>{inspiration.readTime} min read</span>
+        <span>{inspiration.readTime} {t('inspirations.card.read_time')}</span>
       </div>
       
       <Badge variant="outline" className={getDifficultyColor(inspiration.difficulty)}>
-        {inspiration.difficulty}
+        {t(`inspirations.difficulties.${inspiration.difficulty}`)}
       </Badge>
       
-      <span className="capitalize">{inspiration.type}</span>
+      <span className="capitalize">{t(`inspirations.types.${inspiration.type}`)}</span>
     </div>
   </div>
                 
@@ -239,7 +240,7 @@ export function InspirationsFeed() {
                           ))}
                           {inspiration.tags.length > 3 && (
                             <Badge variant="secondary" className="text-xs">
-                              +{inspiration.tags.length - 3} more
+                              {t('inspirations.card.more_tags', { count: inspiration.tags.length - 3 })}
                             </Badge>
                           )}
                         </div>
@@ -249,7 +250,7 @@ export function InspirationsFeed() {
                   
                   {inspiration.source && (
                     <div className="text-xs text-muted-foreground">
-                      Source: {inspiration.source}
+                      {t('inspirations.card.source')}: {inspiration.source}
                     </div>
                   )}
                 </div>

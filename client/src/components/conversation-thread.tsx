@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Send, ArrowLeft } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface ConversationThreadProps {
   currentUserId: string;
@@ -26,6 +27,7 @@ export function ConversationThread({
   messages,
   onBack 
 }: ConversationThreadProps) {
+  const { t, i18n } = useTranslation();
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -63,8 +65,8 @@ export function ConversationThread({
     },
     onError: () => {
       toast({
-        title: "Failed to send",
-        description: "Could not send your message. Please try again.",
+        title: t('thread.toast.send_failed'),
+        description: t('thread.toast.send_failed_desc'),
         variant: "destructive",
       });
     },
@@ -110,7 +112,7 @@ const parseLocalDate = (dateInput: string | Date) => {
   const formatMessageTime = (dateInput: Date | string) => {
     const date = parseLocalDate(dateInput);
     if (isNaN(date.getTime())) return "--:--";
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
   };
 
   const getDayLabel = (dateInput: string | Date) => {
@@ -126,7 +128,7 @@ const parseLocalDate = (dateInput: string | Date) => {
     if (date.getTime() === today.getTime()) return "Today";
     if (date.getTime() === yesterday.getTime()) return "Yesterday";
     
-    return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' });
+    return date.toLocaleDateString(i18n.language, { weekday: 'short', day: 'numeric', month: 'long' });
   };
 
   return (
@@ -165,7 +167,7 @@ const parseLocalDate = (dateInput: string | Date) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 w-full">
         {threadMessages.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No messages yet. Start the conversation!</p>
+            <p>{t('thread.no_messages')}</p>
           </div>
         ) : (
           threadMessages.map((message, index) => {
@@ -230,7 +232,7 @@ const parseLocalDate = (dateInput: string | Date) => {
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={`Message ${otherUserProfile?.displayName || "user"}...`}
+            placeholder={t('thread.placeholder', { name: otherUserProfile?.displayName || "user" })}
             className="min-h-[60px] resize-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -251,7 +253,7 @@ const parseLocalDate = (dateInput: string | Date) => {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
+          {t('thread.typing_hint')}
         </p>
       </div>
     </div>

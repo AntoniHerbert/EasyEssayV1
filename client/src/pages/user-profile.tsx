@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type UserProfile, type Friendship, type Essay } from "@shared/schema";
+import { useTranslation } from "react-i18next"; 
 
 import { 
   UserPlus, 
@@ -27,6 +28,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 
 export default function UserProfilePage() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [match, params] = useRoute("/profile/:userId");
   const userId = params?.userId || "";
@@ -79,15 +81,15 @@ export default function UserProfilePage() {
     },
     onSuccess: () => {
       toast({
-        title: "Friend request sent",
-        description: "Your friend request has been sent successfully!",
+        title: t('friendship.toast.sent_title'), 
+        description: t('friendship.toast.sent_desc'),
       });
       queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user?.id}`] });
     },
     onError: () => {
       toast({
-        title: "Request failed",
-        description: "Failed to send friend request. Please try again.",
+        title: t('friendship.toast.error_title'),
+        description: t('friendship.toast.error_desc'),
         variant: "destructive",
       });
     },
@@ -115,7 +117,7 @@ export default function UserProfilePage() {
   };
 
   const formatJoinDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('en-US', { 
+      return new Date(date).toLocaleDateString(i18n.language, {      
       year: 'numeric', 
       month: 'long' 
     });
@@ -184,7 +186,7 @@ export default function UserProfilePage() {
               <p className="text-muted-foreground text-lg mb-2">@{userProfile.username}</p>
               <div className="flex items-center justify-center md:justify-start text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4 mr-1" />
-                Joined {formatJoinDate(userProfile.joinedAt)}
+                {t('profile.joined', { date: formatJoinDate(userProfile.joinedAt) })}     
               </div>
             </div>
             <div className="flex flex-col space-y-2">
@@ -192,10 +194,10 @@ export default function UserProfilePage() {
                 existingFriendship.status === "accepted" ? (
                   <Badge variant="secondary" className="flex items-center gap-1 justify-center">
                     <Check className="w-4 h-4" />
-                    Friends
+                    {t('friendship.friends')}
                   </Badge>
                 ) : existingFriendship.status === "pending" ? (
-                  <Badge variant="outline" className="justify-center">Request Pending</Badge>
+                  <Badge variant="outline" className="justify-center">{t('friendship.pending')}</Badge>
                 ) : null
               ) : (
                 <Button
@@ -205,7 +207,7 @@ export default function UserProfilePage() {
                   data-testid={`button-send-friend-request-${userId}`}
                 >
                   <UserPlus className="w-4 h-4" />
-                  Send Friend Request
+                  {t('friendship.send_request')}
                 </Button>
               )}
               <Button
@@ -215,7 +217,7 @@ export default function UserProfilePage() {
                 data-testid={`button-message-${userId}`}
               >
                 <MessageSquare className="w-4 h-4" />
-                Message
+                {t('friendship.message')}
               </Button>
             </div>
           </div>
@@ -270,7 +272,7 @@ export default function UserProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Essays by {userProfile.displayName}
+            {t('profile.essays_by', { name: userProfile.displayName })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -285,7 +287,7 @@ export default function UserProfilePage() {
             </div>
           ) : essays.length === 0 ? (
             <p className="text-muted-foreground text-center py-8" data-testid="text-no-essays">
-              No essays yet
+              {t('profile.no_essays')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -306,21 +308,21 @@ export default function UserProfilePage() {
                             {essay.content.slice(0, 150)}...
                           </p>
                           <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                            <span>{essay.content.split(' ').filter(w => w).length} words</span>
+                            <span>{t('essay.words_count', { count: essay.content.split(' ').filter(w => w).length })}</span>
                             <span>•</span>
-                            <span>{new Date(essay.createdAt).toLocaleDateString()}</span>
+                            <span>{new Date(essay.createdAt).toLocaleDateString(i18n.language)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {essay.isPublic ? (
                             <Badge variant="secondary" className="flex items-center gap-1">
                               <Globe className="w-3 h-3" />
-                              Public
+                              {t('common.public')}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="flex items-center gap-1">
                               <Lock className="w-3 h-3" />
-                              Private
+                              {t('common.private')}
                             </Badge>
                           )}
                         </div>
@@ -338,9 +340,9 @@ export default function UserProfilePage() {
                     disabled={isFetchingNextPage}
                   >
                     {isFetchingNextPage ? (
-                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</>
+                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('common.loading')}</>
                     ) : (
-                       "Load More"
+                       t('common.load_more')
                     )}
                   </Button>
                 </div>

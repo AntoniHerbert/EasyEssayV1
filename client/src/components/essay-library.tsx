@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Share, MoreVertical, Check, Clock, Globe, FileText, Eye, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useTranslation } from "react-i18next";
 
 interface EssayLibraryProps {
   onEditEssay?: (essayId: string) => void;
@@ -17,6 +18,7 @@ interface EssayLibraryProps {
 
 export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const debouncedSearch = useDebounce(searchQuery, 500);
@@ -72,14 +74,14 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/essays?authorId=${user?.id}`] });
       toast({
-        title: "Essay deleted",
-        description: "The essay has been deleted successfully.",
+        title: t('library.toast.deleted_title'),
+        description: t('library.toast.deleted_desc'),
       });
     },
     onError: () => {
       toast({
-        title: "Delete failed",
-        description: "Failed to delete essay. Please try again.",
+        title: t('library.toast.delete_failed_title'),
+        description: t('library.toast.delete_failed_desc'),
         variant: "destructive",
       });
     },
@@ -93,16 +95,16 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       const updatedEssay = await response.json();
       queryClient.invalidateQueries({ queryKey: ["/api/essays"] });
       toast({
-        title: updatedEssay.isPublic ? "Essay published" : "Essay unpublished",
+        title: updatedEssay.isPublic ? t('library.toast.published_title') : t('library.toast.unpublished_title'),
         description: updatedEssay.isPublic 
-          ? "Your essay is now visible to the community."
-          : "Your essay is now private.",
+          ? t('library.toast.published_desc')
+          : t('library.toast.unpublished_desc'),
       });
     },
     onError: () => {
       toast({
-        title: "Action failed",
-        description: "Failed to update essay visibility. Please try again.",
+        title: t('library.toast.action_failed_title'),
+        description: t('library.toast.action_failed_desc'),
         variant: "destructive",
       });
     },
@@ -113,21 +115,21 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       return (
         <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 text-xs rounded-full">
           <Globe className="w-3 h-3 mr-1 inline" />
-          Published
+          {t('library.status.published')}
         </span>
       );
     } else if (essay.isAnalyzed) {
       return (
         <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 text-xs rounded-full">
           <Check className="w-3 h-3 mr-1 inline" />
-          Analyzed
+          {t('library.status.analyzed')}
         </span>
       );
     } else {
       return (
         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 text-xs rounded-full">
           <Clock className="w-3 h-3 mr-1 inline" />
-          Draft
+          {t('library.status.draft')}
         </span>
       );
     }
@@ -138,15 +140,15 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">My Essay Library</h2>
-          <p className="text-muted-foreground">Manage and review your written essays</p>
+          <h2 className="text-2xl font-bold mb-2">{t('library.header.title')}</h2>
+          <p className="text-muted-foreground">{t('library.header.subtitle')}</p>
         </div>
         <div className="mt-4 sm:mt-0 flex items-center space-x-3">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search essays..."
+              placeholder={t('library.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2"
@@ -155,7 +157,7 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
           </div>
           <Button onClick={() => onEditEssay?.("")} data-testid="button-new-essay">
             <Plus className="w-4 h-4 mr-2" />
-            New Essay
+            {t('library.new_essay')}
           </Button>
         </div>
       </div>
@@ -163,10 +165,10 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       {/* Filter Tabs */}
       <div className="grid grid-cols-4 gap-1 bg-muted rounded-lg p-1 mb-6 w-fit">
         {[
-          { key: "all", label: "All Essays" },
-          { key: "drafts", label: "Drafts" },
-          { key: "published", label: "Published" },
-          { key: "analyzed", label: "Analyzed" },
+          { key: "all", label: t('library.filters.all') },
+          { key: "drafts", label: t('library.filters.drafts') },
+          { key: "published", label: t('library.filters.published') },
+          { key: "analyzed", label: t('library.filters.analyzed') },
         ].map((filter) => (
           <Button
             key={filter.key}
@@ -199,14 +201,14 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
         <Card>
           <CardContent className="p-12 text-center">
             <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No essays found</h3>
+            <h3 className="text-lg font-medium mb-2">{t('library.empty.title')}</h3>
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? "Try adjusting your search terms." : "Start writing your first essay!"}
+              {searchQuery ? t('library.empty.desc_search') : t('library.empty.desc_default')}
             </p>
             {!searchQuery && (
               <Button onClick={() => onEditEssay?.("")} data-testid="button-create-first">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Essay
+                {t('library.empty.create')}
               </Button>
             )}
           </CardContent>
@@ -250,7 +252,7 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
                     disabled={deleteEssayMutation.isPending}
                     onClick={(e) => {
                       e.stopPropagation(); 
-                      if (window.confirm("Are you sure you want to delete this essay? This action cannot be undone.")) {
+                      if (window.confirm(t('library.card.confirm_delete'))) {
                         deleteEssayMutation.mutate(essay.id);
                       }
                     }}
@@ -266,8 +268,8 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
                 </p>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                  <span>{new Date(essay.updatedAt).toLocaleDateString()}</span>
-                  <span>{essay.wordCount} words</span>
+                  <span>{new Date(essay.updatedAt).toLocaleDateString(i18n.language)}</span>
+                  <span>{t('library.card.words', { count: essay.wordCount })}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -276,11 +278,11 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
                   </div>
                     {( essay.isAnalyzed) ? (
                       <Button variant="secondary" onClick={() => onViewEssay?.(essay.id)}>
-                        <Eye className="w-4 h-4 mr-1" /> View
+                        <Eye className="w-4 h-4 mr-1" /> {t('library.card.view')}
                       </Button>
                     ) : (
                       <Button variant="ghost" onClick={() => onEditEssay?.(essay.id)}>
-                        <Edit className="w-4 h-4 mr-1" /> Edit
+                        <Edit className="w-4 h-4 mr-1" /> {t('library.card.edit')}
                       </Button>
                     )}
                 </div>
@@ -299,10 +301,10 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
                   {isFetchingNextPage ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
+                      {t('common.loading')}
                     </>
                   ) : (
-                    "Load More Essays"
+                    t('library.load_more')
                   )}
                 </Button>
              </div>

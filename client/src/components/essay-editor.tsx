@@ -10,6 +10,7 @@ import { type Essay } from "@shared/schema";
 import { Save, Wand2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "react-i18next"; 
 
 interface EssayEditorProps {
   essayId?: string;
@@ -18,6 +19,7 @@ interface EssayEditorProps {
 
 export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -65,14 +67,14 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/essays"] });
       onEssayChange?.(savedEssay);
       toast({
-        title: "Essay saved",
-        description: "Your essay has been saved successfully.",
+        title: t('editor.toast.saved_title'),
+        description: t('editor.toast.saved_desc'),
       });
     },
     onError: () => {
       toast({
-        title: "Save failed",
-        description: "Failed to save essay. Please try again.",
+        title: t('editor.toast.save_failed_title'),
+        description: t('editor.toast.save_failed_desc'),
         variant: "destructive",
       });
     },
@@ -89,8 +91,8 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/essays?authorId=${user?.id}`] });
       
       toast({
-        title: "AI Analysis complete",
-        description: `AI review generated with ${aiReview.corrections?.length || 0} suggestions. Redirecting to view...`,
+        title: t('editor.toast.analysis_complete'),
+        description: t('editor.toast.analysis_desc', { count: aiReview.corrections?.length || 0 }),
       });
 
       setTimeout(() => {
@@ -99,8 +101,8 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
     },
     onError: (error) => {
       toast({
-        title: "Analysis failed",
-        description: error.message || "Failed to analyze essay. Please try again.",
+        title: t('editor.toast.analysis_failed'),
+        description: error.message || t('editor.toast.analysis_failed_default'),
         variant: "destructive",
       });
     },
@@ -109,8 +111,8 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
   const handleAnalyze = async () => {
     if (!title.trim() || !content.trim()) {
       toast({
-        title: "Content required",
-        description: "Please add a title and content before analyzing.",
+        title: t('editor.toast.content_req_title'),
+        description: t('editor.toast.content_req_desc'),
         variant: "destructive",
       });
       return;
@@ -122,7 +124,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
       let currentEssayId = essayId;
       if (!currentEssayId) {
         const saveResponse = await apiRequest("POST", "/api/essays", {
-          title: title || "Untitled Essay",
+          title: title || t('editor.untitled'),
           content,
           isPublic: false,
         });
@@ -141,9 +143,9 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
     <Card className="rounded-xl shadow-sm border border-border overflow-hidden">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <h2 className="text-lg font-semibold">Essay Editor</h2>
+          <h2 className="text-lg font-semibold">{t('editor.header')}</h2>
           <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-md">
-            {wordCount} words
+            {t('editor.words', { count: wordCount })}
           </span>
         </div>
         <div className="flex items-center space-x-2">
@@ -162,7 +164,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
             data-testid="button-analyze"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            {isAnalyzing ? "Analyzing..." : "Analyze"}
+            {isAnalyzing ? t('editor.analyzing') : t('editor.analyze')}
           </Button>
         </div>
       </div>
@@ -171,7 +173,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
         <div className="mb-4">
           <Input
             type="text"
-            placeholder="Essay Title"
+            placeholder={t('editor.placeholders.title')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="text-xl font-semibold bg-transparent border-none shadow-none text-foreground placeholder-muted-foreground px-0"
@@ -180,7 +182,7 @@ export function EssayEditor({ essayId, onEssayChange }: EssayEditorProps) {
         </div>
         
         <Textarea
-          placeholder="Start writing your essay..."
+          placeholder={t('editor.placeholders.content')}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           className="min-h-[400px] text-base leading-relaxed bg-transparent border-none shadow-none resize-none px-0"

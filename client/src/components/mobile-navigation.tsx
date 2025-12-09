@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"; 
 import { Button } from "@/components/ui/button";
 import { FileText, Folder, Users, User, Lightbulb } from "lucide-react";
 
@@ -7,12 +8,13 @@ interface MobileNavigationProps {
 }
 
 export function MobileNavigation({ activeSection, onSectionChange }: MobileNavigationProps) {
+  const { t } = useTranslation(); 
   const navItems = [
-    { id: "write", label: "Write", icon: FileText },
-    { id: "library", label: "Library", icon: Folder },
-    { id: "inspirations", label: "Inspirations", icon: Lightbulb },
-    { id: "community", label: "Community", icon: Users },
-    { id: "profile", label: "Profile", icon: User },
+    { id: "write", label: t('nav.write'), icon: FileText },
+    { id: "library", label: t('nav.library'), icon: Folder },
+    { id: "inspirations", label: t('nav.inspirations'), icon: Lightbulb },
+    { id: "community", label: t('nav.community'), icon: Users },
+    { id: "profile", label: t('nav.profile'), icon: User },
   ];
 
   return (

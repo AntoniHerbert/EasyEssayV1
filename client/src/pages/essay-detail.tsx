@@ -15,17 +15,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { type Essay, type PeerReviewWithProfile, type ReviewCategory, type CorrectionObject } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
-const REVIEW_CATEGORIES: { key: ReviewCategory; label: string; description: string; color: string }[] = [
-  { key: 'grammar', label: 'Grammar & Mechanics', description: 'Spelling, punctuation, syntax', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
-  { key: 'style', label: 'Style & Voice', description: 'Writing style, tone, word choice', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-  { key: 'clarity', label: 'Clarity & Flow', description: 'Sentence structure, transitions', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  { key: 'structure', label: 'Structure & Organization', description: 'Logical flow, paragraph structure', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-  { key: 'content', label: 'Content & Ideas', description: 'Argument strength, evidence, depth', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
-  { key: 'research', label: 'Research & Evidence', description: 'Sources, citations, support', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' }
+const REVIEW_CATEGORIES_CONFIG: { key: ReviewCategory; color: string }[] = [
+  { key: 'grammar', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+  { key: 'style', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+  { key: 'clarity', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+  { key: 'structure', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  { key: 'content',  color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+  { key: 'research', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' }
 ];
 
 export default function EssayDetail() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [match, params] = useRoute("/essay/:id");
   const essayId = params?.id;
@@ -92,8 +94,8 @@ export default function EssayDetail() {
     },
     onError: (error: any) => {
       toast({
-        title: "Cannot review",
-        description: error?.message || "You cannot review your own essay.",
+        title: t('essay_detail.toast.cannot_review'),
+        description: error?.message || t('essay_detail.toast.cannot_review_own'),
         variant: "destructive",
       });
     },
@@ -109,14 +111,14 @@ export default function EssayDetail() {
       setSelectionRange(null);
       setCorrectionComment("");
       toast({
-        title: "Comment added",
-        description: "Your comment has been saved successfully.",
+        title: t('essay_detail.toast.comment_added'),
+        description: t('essay_detail.toast.comment_saved'),
       });
     },
     onError: () => {
       toast({
-        title: "Failed to add comment",
-        description: "Please try again.",
+        title: t('essay_detail.toast.comment_failed'),
+        description: t('common.try_again') || "Please try again.",
         variant: "destructive",
       });
     }
@@ -164,8 +166,8 @@ export default function EssayDetail() {
   const handleSubmitCorrection = async () => {
     if (!correctionComment.trim()) {
       toast({
-        title: "Missing information",
-        description: "Please add a comment.",
+        title: t('essay_detail.toast.missing_info'),
+        description: t('essay_detail.toast.missing_comment'),
         variant: "destructive",
       });
       return;
@@ -195,8 +197,8 @@ export default function EssayDetail() {
   const handleSubmitReview = async () => {
     if (!allCategoriesReviewed) {
       toast({
-        title: "Incomplete review",
-        description: "Please complete all six category scores before submitting.",
+        title: t('essay_detail.toast.incomplete'),
+        description: t('essay_detail.toast.incomplete_desc'),
         variant: "destructive",
       });
       return;
@@ -205,8 +207,8 @@ export default function EssayDetail() {
     if (!activeReviewId) {
       await getOrCreateReviewMutation.mutateAsync();
       toast({
-        title: "Review submitted",
-        description: "Your peer review has been saved successfully.",
+        title: t('essay_detail.toast.submitted'),
+        description: t('essay_detail.toast.submitted_desc'),
       });
       return;
     }
@@ -229,13 +231,13 @@ export default function EssayDetail() {
       queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
       
       toast({
-        title: "Review submitted",
-        description: "Your peer review has been locked and submitted successfully.",
+        title: t('essay_detail.toast.submitted'),
+        description: t('essay_detail.toast.submitted_locked'),
       });
     } catch (error) {
       toast({
-        title: "Failed to submit review",
-        description: "Please try again.",
+        title: t('essay_detail.toast.submit_failed'),
+        description: t('common.try_again') || "Please try again.",
         variant: "destructive",
       });
     }
@@ -254,10 +256,10 @@ export default function EssayDetail() {
     return categoryScores[category] !== 100;
   };
 
-  const allCategoriesReviewed = REVIEW_CATEGORIES.every(cat => isCategoryReviewed(cat.key));
+  const allCategoriesReviewed = REVIEW_CATEGORIES_CONFIG.every(cat => isCategoryReviewed(cat.key));
 
-  const reviewedCategoriesCount = REVIEW_CATEGORIES.filter(cat => isCategoryReviewed(cat.key)).length;
-  const reviewProgress = (reviewedCategoriesCount / REVIEW_CATEGORIES.length) * 100;
+  const reviewedCategoriesCount = REVIEW_CATEGORIES_CONFIG.filter(cat => isCategoryReviewed(cat.key)).length;
+  const reviewProgress = (reviewedCategoriesCount / REVIEW_CATEGORIES_CONFIG.length) * 100;
 
   const getReviewerName = (review: PeerReviewWithProfile) => {
     if (review.reviewerId === "AI") return "AI";
@@ -288,7 +290,7 @@ export default function EssayDetail() {
         );
       }
 
-      const category = REVIEW_CATEGORIES.find(c => c.key === correction.category);
+      const category = REVIEW_CATEGORIES_CONFIG.find(c => c.key === correction.category);
       const highlightClass = category ? category.color : 'bg-yellow-200 dark:bg-yellow-800';
 
       segments.push(
@@ -317,7 +319,7 @@ export default function EssayDetail() {
   };
 
   if (!match || !essayId) {
-    return <div>Essay not found</div>;
+    return <div>{t('essay_detail.not_found')}</div>;
   }
 
   if (essayLoading) {
@@ -338,23 +340,23 @@ export default function EssayDetail() {
 
   const essayData = essay as Essay;
   const isAuthor = essayData?.authorId === user?.id;
-  const isEditingReview = !isAuthor && !isReviewSubmitted; // Estou mexendo nos sliders?
+  const isEditingReview = !isAuthor && !isReviewSubmitted; 
 
   let displayScore = 0;
-  let scoreLabel = "No reviews yet";
+  let scoreLabel = t('essay_detail.scores.no_reviews');
 
   if (viewingReviewId) {
     const review = reviews.find(r => r.id === viewingReviewId);
     displayScore = review ? review.overallScore : 0;
-    scoreLabel = "Selected Review Score";
+    scoreLabel = t('essay_detail.scores.selected_review');
   
   } else if (isEditingReview) {
     displayScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
-    scoreLabel = "Your Current Score";
+    scoreLabel = t('essay_detail.scores.current_score');
 
   } else if (reviews.length > 0) {
     displayScore = essayData?.averageScore || 0;
-    scoreLabel = `Average Score (${essayData?.reviewCount || 0} reviews)`;
+    scoreLabel = t('essay_detail.scores.average', { count: essayData?.reviewCount || 0 });
   }
   const overallScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
   const maxScore = 1200;
@@ -402,13 +404,13 @@ export default function EssayDetail() {
         {/* Data */}
         <div className="flex items-center gap-1 whitespace-nowrap">
           <Calendar className="w-4 h-4" />
-          <span>{essayData ? new Date(essayData.createdAt).toLocaleDateString() : ''}</span>
+          <span>{essayData ? new Date(essayData.createdAt).toLocaleDateString(i18n.language) : ''}</span>
         </div>
 
         {/* Palavras */}
         <div className="flex items-center gap-1 whitespace-nowrap">
           <Eye className="w-4 h-4" />
-          <span>{essayData?.wordCount} words</span>
+          <span>{t('essay.words_count', { count: essayData?.wordCount })}</span>
         </div>
       </div>
     </div>
@@ -430,7 +432,7 @@ export default function EssayDetail() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Essay Content</CardTitle>
+                <CardTitle>{t('essay_detail.content.title')}</CardTitle>
                 {viewingReviewId && (
                   <Button 
                     variant="outline" 
@@ -438,7 +440,7 @@ export default function EssayDetail() {
                     onClick={() => setViewingReviewId(null)}
                     data-testid="clear-highlights"
                   >
-                    Clear Highlights
+                    {t('essay_detail.content.clear_highlights')}
                   </Button>
                 )}
               </div>
@@ -471,7 +473,7 @@ export default function EssayDetail() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
-                    {viewingReviewId ? "Selected Review Comments" : "Peer Review Comments"}
+                    {viewingReviewId ? t('essay_detail.comments.selected_title') : t('essay_detail.comments.title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -483,7 +485,7 @@ export default function EssayDetail() {
                         <div key={review.id} className="space-y-3 pb-4 border-b last:border-b-0">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-medium text-sm">Reviewer: {review.reviewerId === "AI" || review.reviewerId === user?.id ? (
+                              <div className="font-medium text-sm">{t('essay_detail.comments.reviewer')}: {review.reviewerId === "AI" || review.reviewerId === user?.id ? (
                                   getReviewerName(review)
                                 ) : (
                                   <Link href={`/profile/${review.reviewerId}`}>
@@ -497,20 +499,20 @@ export default function EssayDetail() {
                                   </Link>
                                 )}</div>
                               <div className="text-xs text-muted-foreground">
-                                Overall Score: {review.overallScore}/1200 ({review.corrections.length} comments)
+                                {t('essay_detail.scores.overall')}: {review.overallScore}/1200 ({t('essay_detail.comments.count', {count: review.corrections.length})})
                               </div>
                             </div> 
                           </div>
                           
                           <div className="space-y-3">
-                            {REVIEW_CATEGORIES.map((cat) => {
+                            {REVIEW_CATEGORIES_CONFIG.map((cat) => {
                               const categoryCorrections = review.corrections.filter(c => c.category === cat.key);
                               if (categoryCorrections.length === 0) return null;
                               
                               return (
                                 <div key={cat.key} className="space-y-2">
                                   <Badge className={cat.color + " text-xs"}>
-                                    {cat.label} ({categoryCorrections.length})
+                                    {t(`essay_detail.categories.${cat.key}.label`)} ({categoryCorrections.length})
                                   </Badge>
                                   <div className="space-y-2 pl-3">
                                     {categoryCorrections.map((correction, idx) => (
@@ -547,13 +549,13 @@ export default function EssayDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
-                  Your Essay
+                  {t('essay_detail.panel.your_essay_title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground text-center py-8">
                   <p className="mb-2">This is your essay.</p>
-                  <p>You cannot review your own work, but you can see reviews from others below.</p>
+                  <p>{t('essay_detail.panel.your_essay_desc')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -562,12 +564,12 @@ export default function EssayDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
-                  Peer Review
+                  {t('essay_detail.panel.peer_review_title')}
                 </CardTitle>
                 {/* Progress Indicator */}
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{reviewedCategoriesCount} of {REVIEW_CATEGORIES.length} categories reviewed</span>
+                    <span>{t('essay_detail.panel.progress', { reviewed: reviewedCategoriesCount, total: REVIEW_CATEGORIES_CONFIG.length })}</span>
                     <span>{Math.round(reviewProgress)}%</span>
                   </div>
                   <Progress value={reviewProgress} className="h-2" />
@@ -576,7 +578,7 @@ export default function EssayDetail() {
               <CardContent>
               <Tabs value={activeCategory} onValueChange={(value) => setActiveCategory(value as ReviewCategory)} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 h-auto">
-                  {REVIEW_CATEGORIES.map((cat) => (
+                  {REVIEW_CATEGORIES_CONFIG.map((cat) => (
                     <TabsTrigger 
                       key={cat.key} 
                       value={cat.key}
@@ -584,7 +586,7 @@ export default function EssayDetail() {
                       data-testid={`tab-${cat.key}`}
                     >
                       <span className="flex items-center gap-1">
-                        {cat.label.split(' ')[0]}
+                        {t(`essay_detail.categories.${cat.key}.label`).split(' ')[0]}
                         {isCategoryReviewed(cat.key) && (
                           <CheckCircle2 className="w-3 h-3 text-green-600" />
                         )}
@@ -593,14 +595,14 @@ export default function EssayDetail() {
                   ))}
                 </TabsList>
                 
-                {REVIEW_CATEGORIES.map((category) => (
+                {REVIEW_CATEGORIES_CONFIG.map((category) => (
                   <TabsContent key={category.key} value={category.key} className="space-y-4 mt-4">
                     {/* Category Score */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-sm font-semibold">{category.label}</div>
-                          <div className="text-xs text-muted-foreground">{category.description}</div>
+                          <div className="text-sm font-semibold">{t(`essay_detail.categories.${category.key}.label`)}</div>
+                          <div className="text-xs text-muted-foreground">{t(`essay_detail.categories.${category.key}.desc`)}</div>
                         </div>
                         <Badge className={category.color}>
                           {categoryScores[category.key]}/200
@@ -625,12 +627,12 @@ export default function EssayDetail() {
                     {/* Text Selection & Comment */}
                     <div className="space-y-3">
                       <div className="text-xs text-muted-foreground">
-                        Add a comment to justify your score (optionally select text from the essay to reference)
+                        {t('essay_detail.panel.comment_instruction')}
                       </div>
                       
                       {selectedText && (
                         <div className="p-3 bg-muted rounded-lg">
-                          <div className="text-sm font-medium mb-1">Selected Text:</div>
+                          <div className="text-sm font-medium mb-1">{t('essay_detail.comments.selected_text_label')}</div>
                           <div className="text-sm break-words italic">"{selectedText}"</div>
                         </div>
                       )}
@@ -638,7 +640,7 @@ export default function EssayDetail() {
                       <Textarea
                         value={correctionComment}
                         onChange={(e) => setCorrectionComment(e.target.value)}
-                        placeholder={isReviewSubmitted ? "Review is submitted and locked" : "Explain your evaluation for this category..."}
+                        placeholder={isReviewSubmitted ? t('essay_detail.panel.placeholder_locked') : t('essay_detail.panel.placeholder_active')}
                         className="min-h-[80px]"
                         disabled={isReviewSubmitted}
                         data-testid={`comment-${category.key}`}
@@ -651,7 +653,7 @@ export default function EssayDetail() {
                         size="sm"
                         data-testid={`add-correction-${category.key}`}
                       >
-                        {addCorrectionMutation.isPending ? "Adding..." : isReviewSubmitted ? "Review Submitted" : "Add Comment to This Category"}
+                        {addCorrectionMutation.isPending ? t('essay_detail.panel.btn_adding') : isReviewSubmitted ? t('essay_detail.panel.btn_submitted') : t('essay_detail.panel.btn_add')}
                       </Button>
                     </div>
 
@@ -660,7 +662,7 @@ export default function EssayDetail() {
                       <>
                         <Separator />
                         <div className="space-y-2">
-                          <div className="text-sm font-medium">Your Comments ({getCategoryCorrections(category.key).length})</div>
+                          <div className="text-sm font-medium">{t('essay_detail.comments.your_comments')} ({getCategoryCorrections(category.key).length})</div>
                           {getCategoryCorrections(category.key).map((correction, idx) => (
                             <div key={idx} className="p-2 bg-muted/50 rounded text-xs">
                               {correction.selectedText && (
@@ -680,15 +682,15 @@ export default function EssayDetail() {
               <div className="mt-6 pt-4 border-t space-y-3">
                 <div className="text-center">
                   <div className="text-xl font-bold text-primary">{overallScore}/1200</div>
-                  <div className="text-xs text-muted-foreground">Overall Score ({Math.round((overallScore / 1200) * 100)}%)</div>
+                  <div className="text-xs text-muted-foreground">{t('essay_detail.scores.overall')} ({Math.round((overallScore / 1200) * 100)}%)</div>
                 </div>
                 {isReviewSubmitted ? (
                   <div className="text-xs text-green-600 text-center font-medium">
-                    ✓ Review submitted and locked
+                    {t('essay_detail.panel.msg_locked')}
                   </div>
                 ) : !allCategoriesReviewed ? (
                   <div className="text-xs text-destructive text-center">
-                    Please complete all 6 categories by adjusting their scores before submitting
+                    {t('essay_detail.panel.msg_incomplete')}
                   </div>
                 ) : null}
                 <Button 
@@ -697,7 +699,7 @@ export default function EssayDetail() {
                   className="w-full"
                   data-testid="submit-review"
                 >
-                  {isReviewSubmitted ? "Review Locked ✓" : getOrCreateReviewMutation.isPending ? "Submitting..." : "Submit Complete Review"}
+                  {isReviewSubmitted ? t('essay_detail.panel.submit_locked') : getOrCreateReviewMutation.isPending ? t('essay_detail.panel.submit_loading') : t('essay_detail.panel.submit_action')}
                 </Button>
               </div>
             </CardContent>
@@ -710,7 +712,7 @@ export default function EssayDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Community Reviews
+                  {t('essay_detail.community_reviews.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -734,13 +736,13 @@ export default function EssayDetail() {
                             {isAI ? (
                               <>
                                 <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
-                                  🤖 AI Analysis
+                                  🤖 {t('essay_detail.comments.ai_label')}
                                 </span>
-                                {isActive && <span className="text-primary">(Viewing)</span>}
+                                {isActive && <span className="text-primary">({t('essay_detail.comments.viewing')})</span>}
                               </>
                             ) : (
                               <>
-                                {reviewerName} {isActive && <span className="text-primary">(Viewing)</span>}
+                                {reviewerName} {isActive && <span className="text-primary">({t('essay_detail.comments.viewing')})</span>}
                               </>
                             )}
                           </div>
@@ -749,16 +751,16 @@ export default function EssayDetail() {
                           </Badge>
                         </div>
                         <div className="grid grid-cols-3 gap-1 text-xs mb-2">
-                          <div>Grammar: {review.grammarScore}/200</div>
-                          <div>Style: {review.styleScore}/200</div>
-                          <div>Clarity: {review.clarityScore}/200</div>
-                          <div>Structure: {review.structureScore}/200</div>
-                          <div>Content: {review.contentScore}/200</div>
-                          <div>Research: {review.researchScore}/200</div>
+                          <div>{t('essay_detail.categories.grammar.label').split(' ')[0]}: {review.grammarScore}/200</div>
+                          <div>{t('essay_detail.categories.style.label').split(' ')[0]}: {review.styleScore}/200</div>
+                          <div>{t('essay_detail.categories.clarity.label').split(' ')[0]}: {review.clarityScore}/200</div>
+                          <div>{t('essay_detail.categories.structure.label').split(' ')[0]}: {review.structureScore}/200</div>
+                          <div>{t('essay_detail.categories.content.label').split(' ')[0]}: {review.contentScore}/200</div>
+                          <div>{t('essay_detail.categories.research.label').split(' ')[0]}: {review.researchScore}/200</div>
                         </div>
                         {review.corrections.length > 0 && (
                           <div className="text-xs text-muted-foreground">
-                            {review.corrections.length} comment{review.corrections.length !== 1 ? 's' : ''}
+                            {t('essay_detail.comments.count', { count: review.corrections.length })}
                           </div>
                         )}
                       </div>
@@ -772,7 +774,7 @@ export default function EssayDetail() {
                         onClick={() => fetchNextPage()}
                         disabled={isFetchingNextPage}
                       >
-                        {isFetchingNextPage ? "Loading..." : "Load older reviews"}
+                        {isFetchingNextPage ? t('common.loading') : t('essay_detail.community_reviews.load_older')}
                       </Button>
                     </div>
                   )}

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { type UserMessage, type UserProfile } from "@shared/schema";
 import { MessageSquare } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ConversationListProps {
   messages: UserMessage[];
@@ -29,6 +30,7 @@ export function ConversationList({
   onSelectConversation,
   selectedUserId 
 }: ConversationListProps) {
+  const { t, i18n } = useTranslation(); 
   
   const conversations = useMemo(() => {
     const conversationMap = new Map<string, Conversation>();
@@ -51,7 +53,7 @@ export function ConversationList({
         
         conversationMap.set(otherUserId, {
           userId: otherUserId,
-          userName: userProfile?.displayName || "Unknown User",
+          userName: userProfile?.displayName || t('common.unknown_user'),
           avatar: userProfile?.avatar || undefined,
           lastMessage: message.message,
           lastMessageTime: messageTime,
@@ -62,7 +64,7 @@ export function ConversationList({
     
     return Array.from(conversationMap.values())
       .sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
-  }, [messages, currentUserId, users]);
+  }, [messages, currentUserId, users, t]);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -77,30 +79,30 @@ const formatTime = (date: Date) => {
     const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     if (messageDate.getTime() === today.getTime()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
     }
     
     if (messageDate.getTime() === yesterday.getTime()) {
-      return 'Yesterday';
+      return t('common.yesterday');
     }
     
     const diffTime = Math.abs(today.getTime() - messageDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
     
     if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'short' });
+      return date.toLocaleDateString(i18n.language, { weekday: 'short' });
     }
 
-    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   if (conversations.length === 0) {
     return (
       <div className="text-center py-12">
         <MessageSquare className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-        <p className="text-muted-foreground">No conversations yet</p>
+        <p className="text-muted-foreground">{t('conversations.empty.title')}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Start a conversation by visiting a user's profile
+          {t('conversations.empty.desc')}
         </p>
       </div>
     );

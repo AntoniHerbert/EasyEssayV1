@@ -26,7 +26,8 @@ import {
   Target,
   Zap,
   Search,
-  Settings
+  Settings,
+  Languages
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ConversationList } from "@/components/conversation-list";
@@ -35,8 +36,11 @@ import { Link } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { io, Socket } from "socket.io-client";
 import { useDebounce } from "@/hooks/use-debounce";
+import { LanguageSelector } from "./LanguageSelector";
+import { useTranslation } from "react-i18next"; 
 
 export function UserProfile() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -127,8 +131,8 @@ export function UserProfile() {
       console.log("Pedido de amizade recebido:", data);
 
       toast({
-        title: "New Connection",
-        description: data.message || "You received a new friend request!",
+        title: t('user_profile.toast.new_connection'),
+        description: data.message || t('user_profile.toast.new_connection_desc'),
         variant: "default",
       });
 
@@ -140,7 +144,7 @@ export function UserProfile() {
       console.log("Pedido aceito:", data);
 
       toast({
-        title: "Friend Request Accepted",
+        title: t('user_profile.toast.request_accepted'),
         description: data.message,
         variant: "default",
       });
@@ -180,14 +184,14 @@ export function UserProfile() {
       queryClient.invalidateQueries({ queryKey: [`/api/profile/${user?.id}`] });
       setIsEditing(false);
       toast({
-        title: "Profile updated",
-        description: "Your profile has been saved successfully.",
+        title: t('user_profile.toast.profile_updated'),
+        description: t('user_profile.toast.profile_updated_desc'),
       });
     },
     onError: () => {
       toast({
-        title: "Update failed",
-        description: "Failed to update profile. Please try again.",
+        title: t('user_profile.toast.update_failed'),
+        description: t('user_profile.toast.update_failed_desc'),
         variant: "destructive",
       });
     },
@@ -200,8 +204,8 @@ export function UserProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user?.id}`] });
       toast({
-        title: "You accepted the friendship",
-        description: "You are now friends!",
+        title: t('user_profile.toast.friendship_accepted'),
+        description: t('user_profile.toast.friendship_accepted_desc'),
       });
     },
   });
@@ -215,15 +219,15 @@ export function UserProfile() {
     },
     onSuccess: () => {
       toast({
-        title: "Friend request sent",
-        description: "Your friend request has been sent successfully!",
+        title: t('user_profile.toast.request_sent'),
+        description: t('user_profile.toast.request_sent_desc'),
       });
       queryClient.invalidateQueries({ queryKey: [`/api/friendships/${user?.id}`] });
     },
     onError: () => {
       toast({
-        title: "Request failed",
-        description: "Failed to send friend request. Please try again.",
+        title: t('user_profile.toast.request_failed'),
+        description: t('user_profile.toast.request_failed_desc'),
         variant: "destructive",
       });
     },
@@ -320,14 +324,14 @@ export function UserProfile() {
                     <Input
                       value={profileForm.displayName}
                       onChange={(e) => setProfileForm(prev => ({...prev, displayName: e.target.value}))}
-                      placeholder="Display Name"
+                      placeholder={t('user_profile.header.display_name_placeholder')}
                       className="font-semibold text-lg"
                       data-testid="input-display-name"
                     />
                     <Input
                       value={profileForm.username}
                       onChange={(e) => setProfileForm(prev => ({...prev, username: e.target.value}))}
-                      placeholder="Username"
+                      placeholder={t('user_profile.header.username_placeholder')}
                       className="text-sm"
                       data-testid="input-username"
                     />
@@ -359,7 +363,7 @@ export function UserProfile() {
             >
               {isEditing ? <Check className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
               <span className="hidden sm:inline">
-                {isEditing ? (updateProfileMutation.isPending ? "Saving..." : "Save") : "Edit"}
+                {isEditing ? (updateProfileMutation.isPending ? t('user_profile.header.saving') : t('user_profile.header.save')) : t('user_profile.header.edit')}
               </span>
             </Button>
           </div>
@@ -370,13 +374,13 @@ export function UserProfile() {
               <Textarea
                 value={profileForm.bio}
                 onChange={(e) => setProfileForm(prev => ({...prev, bio: e.target.value}))}
-                placeholder="Tell us about yourself..."
+                placeholder={t('user_profile.header.bio_placeholder')}
                 className="min-h-[80px]"
                 data-testid="textarea-bio"
               />
             ) : (
               <p className="text-muted-foreground">
-                {currentProfile.bio || "No bio yet. Click edit to add one!"}
+                {currentProfile.bio || t('user_profile.header.no_bio')}
               </p>
             )}
           </div>
@@ -435,25 +439,25 @@ export function UserProfile() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <Mail className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Messages</span> 
+              <span className="hidden sm:inline">{t('user_profile.tabs.messages')}</span> 
               <span className="ml-0 sm:ml-2">
                 ({(messages as UserMessage[]).filter(m => !m.isRead && m.toUserId === user?.id).length})
             </span>          
             </TabsTrigger>
           <TabsTrigger value="friends" className="flex items-center gap-2">
             <Users className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Friends</span> 
+              <span className="hidden sm:inline">{t('user_profile.tabs.friends')}</span> 
               <span className="ml-0 sm:ml-2">
                 ({(friendships as Friendship[]).filter(f => f.status === "accepted").length})
             </span>
             </TabsTrigger>
           <TabsTrigger value="discover" className="flex items-center gap-2">
             <UserPlus className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Discover</span>
+          <span className="hidden sm:inline">{t('user_profile.tabs.discover')}</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2 shrink-0">
             <Settings className="w-4 h-4" />
-           <span className="hidden sm:inline">Settings</span>
+           <span className="hidden sm:inline">{t('user_profile.tabs.settings')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -477,7 +481,7 @@ export function UserProfile() {
                 <div className="grid md:grid-cols-[350px_1fr] h-[600px]">
                   {/* Conversation List */}
                   <div className={`border-r overflow-y-auto p-4 ${selectedConversationUserId ? 'hidden md:block' : ''}`}>
-                    <h3 className="text-lg font-semibold mb-4">Conversations</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('user_profile.messages.title')}</h3>
                     <ConversationList
                       messages={messages as UserMessage[]}
                       currentUserId={user?.id || ""}
@@ -501,7 +505,7 @@ export function UserProfile() {
                       <div className="flex items-center justify-center h-full text-muted-foreground">
                         <div className="text-center">
                           <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                          <p>Select a conversation to start chatting</p>
+                          <p>{t('user_profile.messages.empty')}</p>
                         </div>
                       </div>
                     )}
@@ -516,7 +520,7 @@ export function UserProfile() {
         <TabsContent value="friends">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <h3 className="text-lg font-semibold">Friends & Requests</h3>
+              <h3 className="text-lg font-semibold">{t('user_profile.friends.title')}</h3>
             </CardHeader>
             <CardContent>
               {friendshipsLoading ? (
@@ -536,9 +540,9 @@ export function UserProfile() {
               ) : (friendships as Friendship[]).length === 0 ? (
                 <div className="text-center py-8">
                   <UserPlus className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">No friends yet</p>
+                  <p className="text-muted-foreground">{t('user_profile.friends.no_friends')}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Connect with other writers in the community
+                    {t('user_profile.friends.connect_hint')}
                   </p>
                 </div>
               ) : (
@@ -565,7 +569,7 @@ export function UserProfile() {
                           <div>
                             <p className="font-medium">{friendProfile?.displayName || "Unknown User"}</p>
                             <p className="text-sm text-muted-foreground capitalize">
-                              {friendship.status}
+                              {friendship.status === 'pending' ? t('user_profile.friends.pending') : t('user_profile.friends.accepted')}
                             </p>
                           </div>
                         </Link>
@@ -590,7 +594,7 @@ export function UserProfile() {
                             </>
                           )}
                           {friendship.status === "accepted" && (
-                            <Badge variant="secondary">Friends</Badge>
+                            <Badge variant="secondary">{t('user_profile.friends.accepted')}</Badge>
                           )}
                         </div>
                       </div>
@@ -606,12 +610,12 @@ export function UserProfile() {
         <TabsContent value="discover">
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-semibold">Discover Writers</h3>
+              <h3 className="text-lg font-semibold">{t('user_profile.discover.title')}</h3>
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by name or username..."
+                    placeholder={t('user_profile.discover.search_placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-8"
@@ -669,9 +673,9 @@ export function UserProfile() {
                           <div className="flex items-center space-x-2">
                             {existingFriendship ? (
                               existingFriendship.status === "accepted" ? (
-                                <Badge variant="secondary">Friends</Badge>
+                                <Badge variant="secondary">{t('user_profile.friends.accepted')}</Badge>
                               ) : existingFriendship.status === "pending" ? (
-                                <Badge variant="outline">Pending</Badge>
+                                <Badge variant="outline">{t('user_profile.friends.pending')}</Badge>
                               ) : null
                             ) : (
                               <Button
@@ -682,7 +686,7 @@ export function UserProfile() {
                                 data-testid={`button-add-friend-${profileUser.userId}`}
                               >
                                 <UserPlus className="w-4 h-4" />
-                                <span className="hidden sm:inline">Connect</span>
+                                <span className="hidden sm:inline">{t('user_profile.discover.connect')}</span>
                               </Button>
                             )}
                           </div>
@@ -693,7 +697,7 @@ export function UserProfile() {
                     <div className="text-center py-8">
                       <UserPlus className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                       <p className="text-muted-foreground">
-                        {searchQuery ? "No users found matching your search" : "No users to discover yet"}
+                        {searchQuery ? t('user_profile.discover.no_results') : t('user_profile.discover.no_users')}
                       </p>
                     </div>
                   )}
@@ -706,13 +710,13 @@ export function UserProfile() {
                         disabled={isFetchingMoreUsers}
                         data-testid="button-load-more-users"
                       >
-                        {isFetchingMoreUsers ? "Loading..." : "Load More Profiles"}
+                        {isFetchingMoreUsers ? t('common.loading') : t('user_profile.discover.load_more')}
                       </Button>
                     </div>
                   )}
                   
                   {!hasMoreUsers && allUsers.length > 0 && (
-                     <p className="text-center text-muted-foreground text-sm mt-4">End of list</p>
+                     <p className="text-center text-muted-foreground text-sm mt-4">{t('user_profile.discover.end_list')}</p>
                   )}
                 </div>
               )}
@@ -724,22 +728,22 @@ export function UserProfile() {
         <TabsContent value="settings">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <h3 className="text-lg font-semibold">Settings</h3>
+              <h3 className="text-lg font-semibold">{t('user_profile.settings.title')}</h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {/* Theme Settings */}
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium">Appearance</h4>
+                  <h4 className="text-sm font-medium">{t('user_profile.settings.appearance.title')}</h4>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-muted rounded-md">
                         <Settings className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Theme</p>
+                        <p className="text-sm font-medium">{t('user_profile.settings.appearance.theme')}</p>
                         <p className="text-xs text-muted-foreground">
-                          Choose your preferred color theme
+                          {t('user_profile.settings.appearance.theme_desc')}
                         </p>
                       </div>
                     </div>
@@ -748,6 +752,30 @@ export function UserProfile() {
                 </div>
 
                 {/* User Preferences */}
+
+                <div className="space-y-3">
+    <h4 className="text-sm font-medium">{t('user_profile.settings.preferences.title')}</h4>
+    <div className="space-y-2">
+      
+      {/* Opção de Idioma */}
+      <div className="flex items-center justify-between p-3 border rounded-lg">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-muted rounded-md">
+            <Languages className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">{t('user_profile.settings.preferences.language')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('user_profile.settings.preferences.language_desc')}
+            </p>
+          </div>
+        </div>
+        {/* Componente Seletor */}
+        <LanguageSelector /> 
+      </div>
+
+    </div>
+  </div>
 
                 {/* 
                 <div className="space-y-3">
@@ -771,7 +799,7 @@ export function UserProfile() {
 
                 {/* Account Section */}
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium">Account</h4>
+                  <h4 className="text-sm font-medium">{t('user_profile.settings.account.title')}</h4>
                   <Button
                     variant="destructive"
                     className="w-full"
@@ -781,7 +809,7 @@ export function UserProfile() {
                     }}
                     data-testid="button-logout"
                   >
-                    Sign Out
+                    {t('user_profile.settings.account.sign_out')}
                   </Button>
                 </div>
               </div>
