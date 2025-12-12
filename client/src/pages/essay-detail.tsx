@@ -84,6 +84,7 @@ export default function EssayDetail() {
         contentScore: categoryScores.content,
         researchScore: categoryScores.research,
         overallScore: Object.values(categoryScores).reduce((sum, score) => sum + score, 0),
+        isSubmitted: false 
       });
       return await response.json();
     },
@@ -100,6 +101,42 @@ export default function EssayDetail() {
       });
     },
   });
+
+  const submitReviewMutation = useMutation({
+mutationFn: async (payload: any) => {
+    if (activeReviewId) {
+      return apiRequest("PATCH", `/api/peer-reviews/${activeReviewId}`, {
+        ...payload,
+        isSubmitted: true 
+      });
+    } 
+    
+    
+    else {
+      return apiRequest("POST", `/api/essays/${essayId}/peer-reviews`, {
+        ...payload,
+        essayId, 
+        isSubmitted: true 
+      });
+    }
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}/peer-reviews`] });
+    queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
+    
+    toast({
+      title: t('essay_detail.toast.submitted'),
+      description: t('essay_detail.toast.submitted_locked'),
+    });
+  },
+  onError: () => {
+    toast({
+      title: t('essay_detail.toast.submit_failed'),
+      description: t('common.try_again') || "Please try again.",
+      variant: "destructive",
+    });
+  }
+});
 
   const addCorrectionMutation = useMutation({
     mutationFn: async (data: { reviewId: string; correction: CorrectionObject }) => {
@@ -150,6 +187,8 @@ export default function EssayDetail() {
     if (reviews.length > 0 && user?.id) {
       const currentUserReview = reviews.find(r => r.reviewerId === user.id);
       if (currentUserReview) {
+      const shouldSync = !activeReviewId || currentUserReview.isSubmitted;
+      if (shouldSync) {
         setActiveReviewId(currentUserReview.id);
         setCategoryScores({
           grammar: currentUserReview.grammarScore,
@@ -160,8 +199,13 @@ export default function EssayDetail() {
           research: currentUserReview.researchScore,
         });
       }
+
+      else if (activeReviewId !== currentUserReview.id) {
+           setActiveReviewId(currentUserReview.id);
+        }
     }
-  }, [reviews, user?.id]);
+  }
+  }, [reviews, user?.id, activeReviewId]);
 
   const handleSubmitCorrection = async () => {
     if (!correctionComment.trim()) {
@@ -204,43 +248,17 @@ export default function EssayDetail() {
       return;
     }
 
-    if (!activeReviewId) {
-      await getOrCreateReviewMutation.mutateAsync();
-      toast({
-        title: t('essay_detail.toast.submitted'),
-        description: t('essay_detail.toast.submitted_desc'),
-      });
-      return;
-    }
-
     const overallScore = Object.values(categoryScores).reduce((sum, score) => sum + score, 0);
-    
-    try {
-      await apiRequest("PATCH", `/api/peer-reviews/${activeReviewId}`, {
-        grammarScore: categoryScores.grammar,
-        styleScore: categoryScores.style,
-        clarityScore: categoryScores.clarity,
-        structureScore: categoryScores.structure,
-        contentScore: categoryScores.content,
-        researchScore: categoryScores.research,
-        overallScore,
-        isSubmitted: true,
-      });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}/peer-reviews`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/essays/${essayId}`] });
-      
-      toast({
-        title: t('essay_detail.toast.submitted'),
-        description: t('essay_detail.toast.submitted_locked'),
-      });
-    } catch (error) {
-      toast({
-        title: t('essay_detail.toast.submit_failed'),
-        description: t('common.try_again') || "Please try again.",
-        variant: "destructive",
-      });
-    }
+
+  submitReviewMutation.mutate({
+    grammarScore: categoryScores.grammar,
+    styleScore: categoryScores.style,
+    clarityScore: categoryScores.clarity,
+    structureScore: categoryScores.structure,
+    contentScore: categoryScores.content,
+    researchScore: categoryScores.research,
+    overallScore,
+  });
   };
 
   const currentUserReview = reviews.find(r => r.reviewerId === user?.id);
@@ -364,21 +382,15 @@ export default function EssayDetail() {
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6">
       {/* Header */}
-  {/* HEADER INTELIGENTE (GRID REORDER) */}
+
   <div className="grid grid-cols-[auto_1fr] md:flex md:items-start gap-x-4 gap-y-2 mb-6">
     
-    {/* 1. SETA DE VOLTAR 
-        Mobile: Fica na Célula 1 (Canto superior esquerdo)
-        Desktop: Fica no início do Flex
-    */}
+
     <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="shrink-0">
       <ArrowLeft className="w-4 h-4" />
     </Button>
 
-    {/* 2. CONTEÚDO (TÍTULO + METADADOS) 
-        Mobile: 'col-span-2' (ocupa a largura toda) e 'row-start-2' (vai para a linha de baixo)
-        Desktop: 'md:col-auto' (volta ao normal) e 'md:flex-1' (ocupa o espaço do meio)
-    */}
+
     <div className="col-span-2 row-start-2 md:col-auto md:row-auto md:flex-1 min-w-0">
       <h1 className="text-2xl md:text-3xl font-bold break-words">{essayData?.title}</h1>
       
@@ -415,10 +427,7 @@ export default function EssayDetail() {
       </div>
     </div>
 
-    {/* 3. NOTA (SCORE)
-        Mobile: 'col-start-2' (vai para a direita da seta) e 'row-start-1' (força subir para a linha da seta)
-        Desktop: 'md:ml-auto' (empurra para a direita no flex)
-    */}
+
     <div className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-auto md:ml-auto text-right pl-2">
       <div className="text-2xl font-bold text-primary">{displayScore}/{maxScore}</div>
       <div className="text-sm text-muted-foreground">{scoreLabel}</div>
@@ -695,11 +704,11 @@ export default function EssayDetail() {
                 ) : null}
                 <Button 
                   onClick={handleSubmitReview}
-                  disabled={isReviewSubmitted || !allCategoriesReviewed || getOrCreateReviewMutation.isPending}
+                  disabled={isReviewSubmitted || !allCategoriesReviewed || getOrCreateReviewMutation.isPending || submitReviewMutation.isPending}
                   className="w-full"
                   data-testid="submit-review"
                 >
-                  {isReviewSubmitted ? t('essay_detail.panel.submit_locked') : getOrCreateReviewMutation.isPending ? t('essay_detail.panel.submit_loading') : t('essay_detail.panel.submit_action')}
+                  {isReviewSubmitted ? t('essay_detail.panel.submit_locked') : submitReviewMutation.isPending || getOrCreateReviewMutation.isPending ? t('essay_detail.panel.submit_loading') : t('essay_detail.panel.submit_action')}
                 </Button>
               </div>
             </CardContent>
