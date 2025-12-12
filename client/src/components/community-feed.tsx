@@ -207,22 +207,22 @@ export function CommunityFeed() {
                             </AvatarFallback>
                           </Avatar>
                     
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
                         <Link href={`/profile/${essay.authorId}`}>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="font-medium hover:text-primary p-0 h-auto"
+                            className="font-medium hover:text-primary p-0 h-auto block truncate max-w-[80px] sm:max-w-fit"
                             data-testid={`button-author-${essay.authorId}`}
                           >
                             {essay.authorName}
                           </Button>
                         </Link>
-                        <span className="text-muted-foreground text-sm">
+                        <span className="text-muted-foreground text-sm shrink-0">
                           {new Date(essay.updatedAt).toLocaleDateString(i18n.language)}
                         </span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${topic.color}`}>
+                        <span className={`px-2 py-1 text-xs rounded-full shrink-0 ${topic.color}`}>
                           {t(`community.topics.${topic.key}`)}
                         </span>
                       </div>

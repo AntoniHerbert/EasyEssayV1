@@ -72,7 +72,7 @@ export function EssayLibrary({ onEditEssay , onViewEssay}: EssayLibraryProps) {
       return apiRequest("DELETE", `/api/essays/${essayId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/essays?authorId=${user?.id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/essays`] });
       toast({
         title: t('library.toast.deleted_title'),
         description: t('library.toast.deleted_desc'),

@@ -650,16 +650,16 @@ export function UserProfile() {
                       
                       return (
                         <div key={profileUser.userId} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50" data-testid={`user-card-${profileUser.userId}`}>
-                          <Link href={`/profile/${profileUser.userId}`} className="flex items-center space-x-4 hover:opacity-80 transition-opacity flex-1" data-testid={`link-profile-${profileUser.userId}`}>
-                            <Avatar className="w-12 h-12">
+                          <Link href={`/profile/${profileUser.userId}`} className="flex items-center space-x-4 hover:opacity-80 transition-opacity flex-1 min-w-0 mr-2" data-testid={`link-profile-${profileUser.userId}`}>
+                            <Avatar className="w-12 h-12 shrink-0">
                               <AvatarImage src={profileUser.avatar || ""} alt={profileUser.displayName} />
                               <AvatarFallback>
                                 {profileUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <h4 className="font-semibold">{profileUser.displayName}</h4>
-                              <p className="text-sm text-muted-foreground">@{profileUser.username}</p>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold truncate">{profileUser.displayName}</h4>
+                              <p className="text-sm text-muted-foreground truncate">@{profileUser.username}</p>
                               <div className="flex items-center space-x-4 mt-1">
                                {/*} <span className="text-xs text-muted-foreground">
                                   {profileUser.totalEssays} essays
@@ -670,7 +670,7 @@ export function UserProfile() {
                               </div>
                             </div>
                           </Link>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 shrink-0">
                             {existingFriendship ? (
                               existingFriendship.status === "accepted" ? (
                                 <Badge variant="secondary">{t('user_profile.friends.accepted')}</Badge>

@@ -138,7 +138,6 @@ async updateEssay(essayId: string, requestingUserId: string, data: UpdateEssayIn
       await Promise.all([
         this.peerReviewStore.deleteByEssayId(essayId, tx),
         this.essayLikeStore.deleteByEssayId(essayId, tx),
-        this.userCorrectionStore.deleteByEssayId(essayId, tx)
       ]);
 
       await this.essayStore.deleteEssay(essayId, tx);

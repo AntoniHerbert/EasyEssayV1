@@ -51,6 +51,14 @@ export class AiService {
     return { total: allEssays.length, ...stats };
   }
 
+  private async updateEssayStats(essayId: string) {
+    const stats = await this.peerReviewStore.getEssayStats(essayId);
+    await this.essayStore.updateEssay(essayId, {
+      reviewCount: stats.count,
+      averageScore: stats.average
+    });
+  }
+
   /**
    * Lógica central privada de interação com a IA e persistência.
    */
@@ -84,7 +92,6 @@ private async runAiAnalysis(essayId: string, title: string, content: string) {
 
     const stats = await this.peerReviewStore.getEssayStats(essayId);
 
-    // 5. Atualiza a Redação com tudo pronto
     await this.essayStore.updateEssay(essayId, { 
       isAnalyzed: true,
       isPublic: true,

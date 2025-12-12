@@ -18,8 +18,11 @@ export function MobileNavigation({ activeSection, onSectionChange }: MobileNavig
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border md:hidden z-40">
-      <div className="flex items-center justify-around py-2">
+<div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border md:hidden z-40 safe-area-bottom">
+      {/* 1. justify-between: Espalha os itens usando o espaço disponível.
+        2. gap-1: Garante um espacinho mínimo entre eles.
+      */}
+      <div className="flex items-center justify-between h-16 w-full px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -28,16 +31,21 @@ export function MobileNavigation({ activeSection, onSectionChange }: MobileNavig
             <Button
               key={item.id}
               variant="ghost"
-              className={`flex flex-col items-center p-3 h-auto ${
-                isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`
+                flex-initial shrink min-w-0 flex flex-col items-center justify-center h-full py-1 px-1 rounded-none 
+                ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}
+              `}
               onClick={() => onSectionChange(item.id)}
               data-testid={`nav-mobile-${item.id}`}
             >
-              <Icon className="w-5 h-5 mb-1" />
-              <span className="text-xs">{item.label}</span>
+              <Icon className="w-5 h-5 mb-1 shrink-0" />
+              
+              <span 
+                className="leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full text-center"
+                style={{ fontSize: 'clamp(9px, 3.5vw, 0.75rem)' }}
+              >
+                {item.label}
+              </span>
             </Button>
           );
         })}

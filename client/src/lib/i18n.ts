@@ -473,7 +473,7 @@ login: {
   enter_password: "Digite sua senha"
   },},
 editor: {
-  header: "Editor de Redação",
+  header: "Editor",
   words: "{{count}} palavras",
   analyze: "Analisar",
   analyzing: "Analisando...",

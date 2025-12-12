@@ -73,13 +73,13 @@ export default function Home() {
       {/* Desktop Navigation */}
       <nav className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-primary">Easy Essay V1</h1>
+          <div className="flex items-center justify-between h-auto min-h-16 py-2 gap-4">
+            <div className="flex items-center shrink-0">
+              <h1 className="text-xl font-bold text-primary break-words leading-tight">Easy Essay V1</h1>
             </div>
             
             {/* Desktop navigation */}
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center justify-end flex-1 gap-2">
               <ThemeToggle />
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -92,13 +92,16 @@ export default function Home() {
                     className={`${
                       isActive 
                         ? "text-primary border-b-2 border-primary rounded-none pb-1" 
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground" 
                     }`}
                     onClick={() => setActiveSection(item.id)}
                     data-testid={`nav-desktop-${item.id}`}
+                    title={item.label}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
+                    <Icon className="w-4 h-4 lg:mr-2" />
+                    <span className="hidden lg:inline whitespace-nowrap">
+                      {item.label}
+                    </span>
                   </Button>
                 );
               })}
